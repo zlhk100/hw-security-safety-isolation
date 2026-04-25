@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security and Safety by Isolation — A Unified Hardware Framework</title>
+<meta name="description" content="A first-principles framework unifying TrustZone, SMMU, MPU, MPAM, Qualcomm VMIDMT/XPU, NXP RDC, and every hardware isolation mechanism under one pattern.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0c0f14;
+  --bg2:       #131720;
+  --bg3:       #1a2030;
+  --border:    #2a3348;
+  --text:      #c8d4e8;
+  --text-dim:  #6a7d9a;
+  --text-head: #e8eef8;
+  --accent:    #4a9eff;
+  --accent2:   #ff6b4a;
+  --accent3:   #4aff9e;
+  --accent4:   #ffb84a;
+  --tag-init:  #1a3a5c;
+  --tag-tgt:   #3a1a1a;
+  --tag-both:  #1a3a2a;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'Fraunces', serif;
+  --nav-w: 260px;
+  --max-w: 780px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.75;
+  display: flex;
+}
+
+/* ── NAV ── */
+nav {
+  width: var(--nav-w);
+  min-height: 100vh;
+  position: fixed;
+  top: 0; left: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 32px 0 48px;
+  z-index: 100;
+}
+
+.nav-logo {
+  padding: 0 24px 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.nav-logo span {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 6px;
+}
+.nav-logo h2 {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--text-head);
+  line-height: 1.4;
+}
+
+nav a {
+  display: block;
+  padding: 7px 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all .15s;
+  line-height: 1.4;
+}
+nav a:hover { color: var(--text); border-left-color: var(--border); }
+nav a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(74,158,255,.05); }
+.nav-section {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 18px 24px 6px;
+  opacity: .6;
+}
+
+/* ── MAIN ── */
+main {
+  margin-left: var(--nav-w);
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── HERO ── */
+.hero {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 80px 64px 64px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -120px; right: -80px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(74,158,255,.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; left: 200px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(255,107,74,.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-kicker {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 700;
+  color: var(--text-head);
+  line-height: 1.15;
+  margin-bottom: 20px;
+  max-width: 680px;
+}
+.hero-sub {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--text-dim);
+  max-width: 580px;
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+.hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.hero-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+
+/* ── CONTENT ── */
+.content {
+  max-width: calc(var(--max-w) + 128px);
+  padding: 0 64px;
+}
+
+section {
+  padding: 72px 0 24px;
+  border-bottom: 1px solid var(--border);
+}
+section:last-of-type { border-bottom: none; }
+
+h2 {
+  font-family: var(--serif);
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 700;
+  color: var(--text-head);
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+.section-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: block;
+}
+h3 {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-head);
+  margin: 36px 0 12px;
+}
+h4 {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin: 28px 0 10px;
+}
+p { margin-bottom: 18px; max-width: var(--max-w); }
+
+/* ── THE FORMULA ── */
+.formula-block {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 28px 32px;
+  margin: 28px 0;
+  max-width: var(--max-w);
+}
+.formula {
+  font-family: var(--mono);
+  font-size: clamp(14px, 2vw, 20px);
+  color: var(--text-head);
+  line-height: 1.5;
+}
+.formula .f-id  { color: var(--accent); }
+.formula .f-res { color: var(--accent2); }
+.formula .f-pol { color: var(--accent3); }
+.formula .f-op  { color: var(--text-dim); }
+
+/* ── CALLOUT ── */
+.callout {
+  background: rgba(74,158,255,.06);
+  border: 1px solid rgba(74,158,255,.2);
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin: 24px 0;
+  max-width: var(--max-w);
+  font-size: 14px;
+}
+.callout.warn {
+  background: rgba(255,107,74,.06);
+  border-color: rgba(255,107,74,.2);
+}
+.callout.good {
+  background: rgba(74,255,158,.06);
+  border-color: rgba(74,255,158,.2);
+}
+.callout-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
+  color: var(--accent);
+}
+.callout.warn .callout-label { color: var(--accent2); }
+.callout.good .callout-label { color: var(--accent3); }
+
+/* ── TWO-SIDE DIAGRAM ── */
+.two-side {
+  display: grid;
+  grid-template-columns: 1fr 40px 1fr;
+  gap: 0;
+  margin: 32px 0;
+  max-width: var(--max-w);
+}
+.side-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+}
+.side-box.init { border-top: 2px solid var(--accent); }
+.side-box.tgt  { border-top: 2px solid var(--accent2); }
+.side-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: block;
+}
+.side-box.init .side-label { color: var(--accent); }
+.side-box.tgt  .side-label { color: var(--accent2); }
+.side-items li {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 7px;
+  list-style: none;
+  padding-left: 16px;
+  position: relative;
+}
+.side-items li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--border);
+}
+.side-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--border);
+}
+
+/* ── MECHANISM TABLE ── */
+.mech-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin: 28px 0;
+  max-width: 100%;
+}
+.mech-table th {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.mech-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(42,51,72,.5);
+  vertical-align: top;
+  line-height: 1.45;
+}
+.mech-table tr:hover td { background: rgba(255,255,255,.02); }
+.mech-table .mname {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-head);
+  white-space: nowrap;
+}
+.tag-i { background: var(--tag-init); color: var(--accent);  font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+.tag-t { background: var(--tag-tgt);  color: var(--accent2); font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+.tag-b { background: var(--tag-both); color: var(--accent3); font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+
+/* ── SMMU STEPPER ── */
+.stepper-wrap {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px;
+  margin: 32px 0;
+  max-width: var(--max-w);
+}
+.stepper-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+.tab-row {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 18px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  transition: all .15s;
+  margin-bottom: -1px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.sel { color: var(--accent); border-bottom-color: var(--accent); }
+.step-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.step-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.step-btn:hover { border-color: var(--accent); color: var(--text); }
+.step-btn.on { background: rgba(74,158,255,.12); border-color: var(--accent); color: var(--accent); }
+.step-dots { display: flex; gap: 6px; margin-bottom: 18px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background .2s; }
+.dot.on { background: var(--accent); }
+.step-svg { width: 100%; overflow: visible; }
+.step-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 14px 18px;
+  background: var(--bg3);
+  border-radius: 5px;
+  border-left: 3px solid var(--accent);
+  margin-top: 14px;
+  line-height: 1.65;
+}
+.amp-panel { display: none; }
+
+/* ── CODE ── */
+pre {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 24px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  margin: 20px 0;
+  max-width: var(--max-w);
+}
+code { font-family: var(--mono); font-size: 12px; color: var(--accent); background: rgba(74,158,255,.08); padding: 1px 5px; border-radius: 3px; }
+
+/* ── CHECKLIST ── */
+.checklist { max-width: var(--max-w); margin: 20px 0; }
+.check-group { margin-bottom: 24px; }
+.check-group-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent4);
+  margin-bottom: 10px;
+}
+.check-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(42,51,72,.4);
+  font-size: 13.5px;
+  align-items: flex-start;
+}
+.check-item:last-child { border-bottom: none; }
+.check-box {
+  width: 16px; height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.check-box:hover { border-color: var(--accent); }
+.check-box.checked { background: var(--accent); border-color: var(--accent); }
+.check-box.checked::after { content: '✓'; color: #0c0f14; font-size: 10px; font-weight: 700; }
+
+/* ── LAYER STACK ── */
+.layer-stack { max-width: var(--max-w); margin: 28px 0; }
+.layer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 18px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  margin-bottom: 4px;
+  transition: border-color .15s;
+  cursor: default;
+}
+.layer:hover { border-color: var(--accent); }
+.layer-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  width: 20px;
+  flex-shrink: 0;
+}
+.layer-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  min-width: 180px;
+  flex-shrink: 0;
+}
+.layer-desc { font-size: 12.5px; color: var(--text-dim); }
+.layer-connector {
+  width: 2px; height: 8px;
+  background: var(--border);
+  margin-left: 28px;
+}
+
+/* ── SCROLLSPY ── */
+.copy-link {
+  opacity: 0;
+  margin-left: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: opacity .2s;
+  text-decoration: none;
+  vertical-align: middle;
+}
+h2:hover .copy-link,
+h3:hover .copy-link { opacity: 1; }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 48px 64px;
+  margin-top: 48px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+footer a { color: var(--accent); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: var(--max-w);
+  margin-bottom: 32px;
+}
+.footer-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+/* ── QCOM TRUST DIAGRAM ── */
+.trust-diagram {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 28px;
+  margin: 28px 0;
+  max-width: var(--max-w);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  nav { display: none; }
+  main { margin-left: 0; }
+  .hero, .content { padding-left: 24px; padding-right: 24px; }
+  .two-side { grid-template-columns: 1fr; }
+  .side-arrow { display: none; }
+  footer { padding: 32px 24px; }
+  .footer-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ NAVIGATION ══ -->
+<nav id="nav">
+  <div class="nav-logo">
+    <span>Knowledge Library</span>
+    <h2>Hardware Security &amp; Safety Isolation</h2>
+  </div>
+
+  <div class="nav-section">Foundation</div>
+  <a href="#problem">The Universal Problem</a>
+  <a href="#pattern">Master Design Pattern</a>
+  <a href="#identity">The Identity Signal</a>
+
+  <div class="nav-section">Cortex-M</div>
+  <a href="#cortexm">SAU / IDAU / NSC</a>
+  <a href="#mpc-ppc">MPC / PPC / TGU</a>
+  <a href="#msw">MSW &amp; GTZC</a>
+
+  <div class="nav-section">Cortex-A</div>
+  <a href="#cortexA">MMU / ELx / DACR</a>
+  <a href="#tzasc">TZASC / TZPC</a>
+  <a href="#smmu">IO-SMMU (2-Stage)</a>
+
+  <div class="nav-section">Vendor Implementations</div>
+  <a href="#qualcomm">Qualcomm Snapdragon</a>
+  <a href="#nxp">NXP i.MX8x RDC/CSU</a>
+  <a href="#xilinx">Xilinx XMPU/XPPU</a>
+  <a href="#amd">AMD TMR/TMZ</a>
+
+  <div class="nav-section">Safety &amp; FFI</div>
+  <a href="#ffi">Security = Safety Pattern</a>
+  <a href="#mpam">MPAM: Temporal Isolation</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="#lock">The Lock Pattern</a>
+  <a href="#table">Unified Lookup Table</a>
+  <a href="#checklist">Engineer Checklist</a>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-kicker">Hardware Security · Functional Safety · Unified Framework</div>
+  <h1>Security and Safety by Isolation</h1>
+  <p class="hero-sub">A first-principles framework that makes TrustZone SAU, IO-SMMU, Qualcomm VMIDMT/XPU, NXP RDC, ARM MPAM, and every other hardware protection mechanism immediately recognisable as the same idea.</p>
+  <div class="hero-tags">
+    <span class="hero-tag">TrustZone</span>
+    <span class="hero-tag">SAU / IDAU</span>
+    <span class="hero-tag">MMU / MPU</span>
+    <span class="hero-tag">MPC / PPC</span>
+    <span class="hero-tag">IO-SMMU</span>
+    <span class="hero-tag">TZASC</span>
+    <span class="hero-tag">Qualcomm VMIDMT / XPU</span>
+    <span class="hero-tag">NXP RDC / CSU</span>
+    <span class="hero-tag">XMPU / XPPU</span>
+    <span class="hero-tag">AMD TMR / TMZ</span>
+    <span class="hero-tag">ARM MPAM</span>
+    <span class="hero-tag">IEC 61508</span>
+    <span class="hero-tag">ISO 26262</span>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ══ PART 1: THE PROBLEM ══ -->
+<section id="problem">
+  <span class="section-num">Part 01</span>
+  <h2>The Universal Problem</h2>
+
+  <p>A modern SoC is a shared interconnect fabric. Every component — Cortex-A application cores, Cortex-M safety cores, GPU, NPU, ISP, DMA engines, USB controllers, network interfaces — generates transactions on the same bus to reach the same pool of memory and peripherals.</p>
+
+  <p>There are no physical walls. A DMA engine can in principle read any byte of DRAM. A compromised GPU driver can issue transfers to addresses it has no business touching. A real-time safety controller sharing a cache with a machine-learning inference engine may find its execution time perturbed by cache pressure it cannot predict or bound.</p>
+
+  <p>Both the security problem and the safety problem reduce to the same fundamental question:</p>
+
+  <div class="formula-block">
+    <div class="formula">
+      <span class="f-id">Who</span>
+      <span class="f-op"> is allowed to touch </span>
+      <span class="f-res">what</span>
+      <span class="f-op">, and </span>
+      <span class="f-pol">what happens when they shouldn't?</span>
+    </div>
+  </div>
+
+  <p>Every hardware protection mechanism in this article is a specialisation of one three-part formula:</p>
+
+  <div class="formula-block">
+    <div class="formula">
+      <span class="f-id">Initiator Identity</span>
+      <span class="f-op"> × </span>
+      <span class="f-res">Target Resource</span>
+      <span class="f-op"> → </span>
+      <span class="f-pol">Access Policy</span>
+    </div>
+  </div>
+
+  <p>The dimensions vary — identity may be a CPU security state, a StreamID, a Domain ID, a Partition ID; the resource may be a memory range, a peripheral, a cache partition, or DRAM bandwidth; the policy may be allow/deny, R/W permissions, or a bandwidth cap. But the structure is always the same.</p>
+</section>
+
+<!-- ══ PART 2: MASTER PATTERN ══ -->
+<section id="pattern">
+  <span class="section-num">Part 02</span>
+  <h2>The Master Design Pattern: Two Sides of Every Transaction</h2>
+
+  <p>Every hardware protection mechanism sits on one of two sides of a bus transaction. This is the most important structural insight in the framework.</p>
+
+  <div class="two-side">
+    <div class="side-box init">
+      <span class="side-label">Initiator Side — Tags the transaction</span>
+      <ul class="side-items">
+        <li>Attaches identity metadata to outgoing transactions</li>
+        <li>Acts as the transaction is generated</li>
+        <li>Cannot stop itself from entering the bus</li>
+        <li><strong>Only protects against the CPU</strong></li>
+        <li>Examples: SAU, IDAU, MSW, VMIDMT, SMMU S1</li>
+      </ul>
+    </div>
+    <div class="side-arrow">⟶</div>
+    <div class="side-box tgt">
+      <span class="side-label">Target Side — Enforces the policy</span>
+      <ul class="side-items">
+        <li>Checks identity tag on every incoming transaction</li>
+        <li>Sits between the bus and the resource</li>
+        <li>Stops any initiator — CPU, DMA, GPU, NPU</li>
+        <li><strong>The load-bearing component</strong></li>
+        <li>Examples: MPC, PPC, TGU, TZASC, XPU, SMMU S2, RDC</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-label">Critical gap</span>
+    Initiator-side mechanisms (SAU, MMU, MPU) only protect against the CPU. DMA engines have no TrustZone state machine — they generate bus transactions that bypass everything the CPU's security infrastructure enforces. A system with SAU but no MPC/PPC can have a correctly configured TrustZone and still be broken: a misconfigured DMA channel reads straight through it.
+  </div>
+
+  <div class="callout good">
+    <span class="callout-label">Design rule</span>
+    Any asset you need to protect against both CPU compromise AND DMA/peripheral bypass must have target-side protection (MPC, PPC, SMMU S2, TZASC, or XPU). SAU alone is insufficient for a complete security or safety claim.
+  </div>
+</section>
+
+<!-- ══ PART 3: IDENTITY SIGNAL ══ -->
+<section id="identity">
+  <span class="section-num">Part 03</span>
+  <h2>The Identity Signal: How Transactions Get Tagged</h2>
+
+  <p>On ARM-based SoCs, the AMBA AHB5/AXI bus fabric carries security and privilege metadata as sideband signals alongside every transaction:</p>
+
+  <pre>Signal          Values              Meaning
+──────────────────────────────────────────────────────────
+HNONSEC         0=Secure, 1=NS      TrustZone security world
+AxPROT[1]       0=Priv,  1=Unpriv   Software privilege level
+AxUSER[...]     vendor-defined       StreamID, domain tag, etc.</pre>
+
+  <p>These are hardware wires, not software registers. Every target on the fabric sees them on every transaction. What the target does with them depends on whether it has a policy enforcer in front of it.</p>
+
+  <h3>StreamID: Identity for Non-CPU Masters</h3>
+  <p>For non-CPU masters (DMA, GPU, NPU), the <code>AxUSER</code> sideband carries a <strong>StreamID</strong> — a hardware-assigned identifier unique to each master or DMA channel. The StreamID is the "who are you" for non-CPU initiators.</p>
+
+  <p>This is the concept that unifies SAU-based TrustZone enforcement (CPU identity) and SMMU-based enforcement (DMA/GPU/NPU identity): both answer the same question — "which domain does this initiator belong to?" — for different classes of master.</p>
+</section>
+
+<!-- ══ PART 4: CORTEX-M ══ -->
+<section id="cortexm">
+  <span class="section-num">Part 04</span>
+  <h2>Cortex-M: SAU, IDAU, and the NSC Bridge</h2>
+
+  <h3>SAU — The CPU's Own Identity Resolver</h3>
+  <p>The SAU (Secure Attribution Unit) is inside every ARMv8-M core. It maintains up to 8 configurable address regions, each classified as Secure, NonSecure Callable (NSC), or NonSecure. When the CPU generates an access to address X, the SAU resolves X's security classification and tags the outgoing transaction with <code>HNONSEC</code> accordingly. If NonSecure code accesses a Secure address, the CPU faults before issuing any bus transaction.</p>
+
+  <div class="callout">
+    <span class="callout-label">Fail-secure default</span>
+    When TrustZone is enabled and no SAU regions are configured, the SAU defaults everything to Secure. An unconfigured system is maximally restrictive, not open.
+  </div>
+
+  <h3>IDAU — The Immutable Baseline</h3>
+  <p>The IDAU (Implementation Defined Attribution Unit) is vendor-fixed hardware attribution that software cannot modify — ever. The SAU can only raise security above the IDAU floor, never lower it. This prevents an attacker with Secure code execution from reconfiguring SAU to expose previously-secure regions that the IDAU has hardwired.</p>
+
+  <h3>The NSC Region — Hardware-Enforced API Boundary</h3>
+  <p>The NonSecure Callable region solves the bridge problem: how does NonSecure code call a Secure service without opening an arbitrary hole? Every NSC entry point must begin with the <code>SG</code> (Secure Gateway) instruction. The CPU hardware verifies that cross-domain branches land on <code>SG</code> — not an arbitrary Secure address. Any other pattern causes a fault. This is hardware-enforced API binding at the isolation boundary.</p>
+</section>
+
+<!-- ══ PART 5: MPC/PPC/TGU ══ -->
+<section id="mpc-ppc">
+  <span class="section-num">Part 05</span>
+  <h2>MPC, PPC and TGU: Target-Side Guards</h2>
+
+  <h3>MPC — Memory Protection Controller</h3>
+  <p>The MPC sits on the AHB bus path between the bus matrix and a SRAM or NVM region. It maintains a policy table — one security bit per memory block — and checks every incoming transaction's <code>HNONSEC</code> against that table, regardless of which master sent it.</p>
+
+  <p>Granularity varies by implementation: 256 B (STM32L5), 512 B (STM32U5 MPCBB), 16 KB (some Cortex-M55 SoC SSRAMPROT). Layout must respect MPC granularity — you cannot independently secure a structure smaller than one block.</p>
+
+  <p>Two violation response modes: <strong>Bus error</strong> (auditable — CPU gets an exception) or <strong>RAZ/WI</strong> (silent — read-as-zero, write-ignored; prevents information leakage about whether the resource exists).</p>
+
+  <h3>PPC — Peripheral Protection Controller</h3>
+  <p>The PPC is the MPC equivalent for peripheral register banks. It sits at the AHB-to-APB bridge. Two ways to secure a peripheral exist — SAU-based (stops CPU only) or PPC-based (stops all initiators). For any PSA or safety certification claim, PPC is required because SAU alone leaves the DMA attack surface open.</p>
+
+  <h3>TGU — The TCM Special Case</h3>
+  <p>TCM (Tightly Coupled Memory) bypasses the AHB bus matrix entirely. Standard MPC components cannot guard it. The TGU (TrustZone Guard Unit — ITGU for ITCM, DTGU for DTCM) is the dedicated mechanism, maintaining a bitmap of TCM pages at the direct CPU-to-memory interface. Hardware default: all TCM Secure at reset.</p>
+
+  <h3>STM32 GTZC — Integrated Security Fabric</h3>
+  <p>STM32U5's GTZC integrates MPC + PPC + MSW + violation monitoring into a single peripheral. Its TZIC generates secure interrupts on any policy violation — satisfying the audit requirement that certified firmware can receive, log, and respond to every illegal access attempt.</p>
+</section>
+
+<!-- ══ PART 6: MSW ══ -->
+<section id="msw">
+  <span class="section-num">Part 06</span>
+  <h2>MSW: Giving Non-CPU Masters a Security Identity</h2>
+
+  <p>DMA engines and other bus masters have no TrustZone state machine. A Master Security Wrapper (MSW) wraps each non-CPU master and injects <code>HNONSEC</code> and <code>HPROT</code> sideband signals onto its outgoing transactions, based on policy programmed by secure firmware at boot time.</p>
+
+  <p>From this point, MPC and PPC cannot tell whether a transaction came from the CPU or a DMA engine — they only see sideband signals. This is by design: the policy should be enforced identically regardless of initiator.</p>
+
+  <div class="callout warn">
+    <span class="callout-label">Security-critical configuration</span>
+    MSW configuration is one of the most common PSA certification failure points. Misconfiguring a DMA channel's MSW as Secure grants it access to the entire Secure memory space, bypassing all MPC enforcement.
+  </div>
+</section>
+
+<!-- ══ PART 7: CORTEX-A ══ -->
+<section id="cortexA">
+  <span class="section-num">Part 07</span>
+  <h2>Cortex-A: MMU, Exception Levels, and DACR</h2>
+
+  <p>Cortex-A introduces Exception Levels (EL0–EL3) — a second isolation dimension orthogonal to TrustZone's Secure/NonSecure split:</p>
+
+  <pre>EL3  Secure        Secure Monitor (TF-A, EL3 firmware)
+EL2  Secure/NS     Hypervisor (KVM, Xen, QHEE, or absent)
+EL1  Secure/NS     OS kernel (Linux, RTOS, TF-M S-kernel)
+EL0  Secure/NS     Applications, Trusted Apps</pre>
+
+  <p>Lower ELs cannot access higher ELs' resources — all cross-level access goes through exception trapping (syscalls, HVC, SMC). The CPU's own translation machinery (MMU + page table permission bits) enforces this before any bus transaction reaches the fabric.</p>
+
+  <h3>DACR — Trust Domains Within the Secure World (AArch32)</h3>
+  <p>AArch32 systems include the DACR (Domain Access Control Register), providing up to 16 trust domains as an additional access control dimension. Each memory page is assigned to a domain number via page table descriptors, and the DACR specifies the access level per domain: No Access, Client (enforced), or Manager (bypassed). This provides intra-world privilege hierarchy — finer-grained isolation of Trusted Applications from each other within the Secure world.</p>
+</section>
+
+<!-- ══ PART 8: TZASC ══ -->
+<section id="tzasc">
+  <span class="section-num">Part 08</span>
+  <h2>TZASC / TZPC: Target-Side Guards for DRAM and Peripherals</h2>
+
+  <h3>TZASC — TrustZone Address Space Controller</h3>
+  <p>The TZASC (ARM TZC-400 being the most common implementation) sits between the system interconnect and the DRAM controller. It maintains address regions with security attributes and blocks NonSecure transactions to Secure-attributed regions.</p>
+
+  <p>Key distinction: <strong>TZASC is not a translation mechanism.</strong> It does not remap addresses. It is purely a range-permission checker — it looks at the physical address on the bus, checks it against its policy table, and passes or blocks. This makes it structurally identical to MPC at a different point in the fabric (DRAM controller rather than SRAM controller).</p>
+
+  <div class="callout">
+    <span class="callout-label">TEE use case</span>
+    The Secure World memory carve-out for TEE (OP-TEE, QTEE) is typically enforced here. TZASC marks the TEE's DRAM region Secure-only. Any NonSecure DMA or CPU access is blocked at the DRAM controller regardless of what the MMU says — providing a hardware backstop that software cannot bypass.
+  </div>
+
+  <h3>TZPC — Peripheral Security Assignment</h3>
+  <p>TZPC is the Cortex-A equivalent of PPC: assigns each peripheral as Secure or NonSecure. NonSecure masters cannot access Secure peripherals. Xilinx XPPU and NXP CSU serve similar roles — vendor implementations of the same target-side peripheral access control pattern.</p>
+</section>
+
+<!-- ══ PART 9: SMMU ══ -->
+<section id="smmu">
+  <span class="section-num">Part 09</span>
+  <h2>IO-SMMU: Extending Isolation to All System Masters</h2>
+
+  <p>The SMMU intercepts transactions from all non-CPU masters before they reach DRAM or peripherals. Every transaction carries a <strong>StreamID</strong> — the SMMU maps this to a translation context and permission policy via its Stream Table (SMMUv3) or Context Bank table (SMMUv2).</p>
+
+  <h3>Why Two Stages?</h3>
+  <p><strong>One-stage:</strong> OS programs page tables → SMMU enforces. Problem: the OS is the entity you don't fully trust. Giving the OS control of SMMU page tables is giving the fox the key to the henhouse.</p>
+  <p><strong>Two-stage:</strong> Stage 1 is controlled by the untrusted entity (Guest OS). Stage 2 is controlled by the trusted entity (Hypervisor at EL2, or EL3 firmware). Stage 1 expresses intent; Stage 2 independently grants or denies permission at the hardware level.</p>
+
+  <!-- INTERACTIVE SMMU STEPPER -->
+  <div class="stepper-wrap">
+    <div class="stepper-title">Interactive: SMMU Translation Walk</div>
+    <div class="tab-row">
+      <button class="tab-btn sel" onclick="showTab('hyp',this)">Hypervisor (EL2 — Dynamic)</button>
+      <button class="tab-btn" onclick="showTab('amp',this)">AMP Hypervisorless (EL3 — Static Lock)</button>
+    </div>
+
+    <!-- HYP TAB -->
+    <div id="tab-hyp">
+      <div class="step-btns">
+        <button class="step-btn on"  onclick="goStep(0,this)">① Device issues VA</button>
+        <button class="step-btn"     onclick="goStep(1,this)">② S1 L1 lookup</button>
+        <button class="step-btn"     onclick="goStep(2,this)">③ S1 L2 lookup</button>
+        <button class="step-btn"     onclick="goStep(3,this)">④ S1 leaf PTE</button>
+        <button class="step-btn"     onclick="goStep(4,this)">⑤ Final PA</button>
+      </div>
+      <div class="step-dots">
+        <div class="dot on" id="d0"></div><div class="dot" id="d1"></div>
+        <div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div>
+      </div>
+
+      <svg class="step-svg" viewBox="0 0 660 330" id="wsv">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+        <!-- Device -->
+        <rect x="10" y="10" width="120" height="52" rx="6" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
+        <text x="70" y="32" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4a9eff">Device (NPU)</text>
+        <text x="70" y="50" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">issues VA</text>
+        <!-- SMMU -->
+        <rect x="10" y="94" width="120" height="52" rx="6" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
+        <text x="70" y="116" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#6a7d9a">SMMU</text>
+        <text x="70" y="133" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">StreamID→STE</text>
+        <line x1="70" y1="62" x2="70" y2="94" stroke="#2a3348" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
+        <!-- S1 column -->
+        <rect x="190" y="10"  width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s1l1" stroke-width="1"/>
+        <text x="260" y="32"  text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4aff9e">S1 L1 table</text>
+        <text x="260" y="50"  text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">Guest OS (IPA)</text>
+        <rect x="190" y="110" width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s1l2" stroke-width="1"/>
+        <text x="260" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4aff9e">S1 L2 table</text>
+        <text x="260" y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">pointed by L1 (IPA)</text>
+        <rect x="190" y="210" width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s1lf" stroke-width="1"/>
+        <text x="260" y="232" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4aff9e">S1 leaf PTE</text>
+        <text x="260" y="250" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">output IPA</text>
+        <!-- S2 column -->
+        <rect x="430" y="10"  width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s2a" stroke-width="1"/>
+        <text x="500" y="32"  text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a">S2 check #1</text>
+        <text x="500" y="50"  text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">L1 ptr IPA→PA</text>
+        <rect x="430" y="110" width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s2b" stroke-width="1"/>
+        <text x="500" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a">S2 check #2</text>
+        <text x="500" y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">L2 ptr IPA→PA</text>
+        <rect x="430" y="210" width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s2c" stroke-width="1"/>
+        <text x="500" y="232" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a">S2 check #3</text>
+        <text x="500" y="250" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">leaf IPA→real PA</text>
+        <!-- Results -->
+        <rect x="430" y="285" width="140" height="36" rx="6" fill="#1a3a2a" stroke="#4aff9e" id="rok" stroke-width="1" opacity="0"/>
+        <text x="500" y="308" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4aff9e" id="rokt" opacity="0">PA delivered ✓</text>
+        <rect x="190" y="285" width="140" height="36" rx="6" fill="#3a1a1a" stroke="#ff6b4a" id="rfail" stroke-width="1" opacity="0"/>
+        <text x="260" y="308" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a" id="rfailt" opacity="0">S2 fault — blocked</text>
+        <!-- Arrows (initially hidden) -->
+        <line id="a1" x1="130" y1="120" x2="190" y2="36"  stroke="#4a9eff" stroke-width="1.2" marker-end="url(#ar)" opacity="0" color="#4a9eff"/>
+        <line id="a2" x1="330" y1="36"  x2="430" y2="36"  stroke="#ff6b4a" stroke-width="1.2" marker-end="url(#ar)" opacity="0" color="#ff6b4a"/>
+        <line id="a3" x1="260" y1="62"  x2="260" y2="110" stroke="#4aff9e" stroke-width="1.2" marker-end="url(#ar)" opacity="0" color="#4aff9e"/>
+        <line id="a4" x1="330" y1="136" x2="430" y2="136" stroke="#ff6b4a" stroke-width="1.2" marker-end="url(#ar)" opacity="0" color="#ff6b4a"/>
+        <line id="a5" x1="260" y1="162" x2="260" y2="210" stroke="#4aff9e" stroke-width="1.2" marker-end="url(#ar)" opacity="0" color="#4aff9e"/>
+        <line id="a6" x1="330" y1="236" x2="430" y2="236" stroke="#ff6b4a" stroke-width="1.2" marker-end="url(#ar)" opacity="0" color="#ff6b4a"/>
+        <line id="a7" x1="500" y1="262" x2="500" y2="285" stroke="#4aff9e" stroke-width="1.2" marker-end="url(#ar)" opacity="0" color="#4aff9e"/>
+        <line id="a8" x1="430" y1="262" x2="330" y2="285" stroke="#ff6b4a" stroke-width="1.2" marker-end="url(#ar)" opacity="0" color="#ff6b4a"/>
+      </svg>
+
+      <div class="step-desc" id="sdesc">
+        The device (NPU/GPU/DMA) issues a DMA request with a virtual address. The SMMU looks up the StreamID in the Stream Table to find which translation context applies. The key insight: S2 is not called once at the end — it is invoked at <em>every step</em> of the S1 walk.
+      </div>
+    </div>
+
+    <!-- AMP TAB -->
+    <div class="amp-panel" id="tab-amp">
+      <svg viewBox="0 0 660 320" style="width:100%">
+        <rect x="10"  y="10"  width="280" height="68" rx="6" fill="#1a2a10" stroke="#ffb84a" stroke-width="1"/>
+        <text x="150" y="36"  text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ffb84a">EL3 Secure Firmware (TF-A)</text>
+        <text x="150" y="56"  text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">programs S2 tables + locks SMMU config</text>
+
+        <rect x="10"  y="110" width="120" height="52" rx="6" fill="#1a2030" stroke="#ff6b4a" stroke-width="1"/>
+        <text x="70"  y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a">SMMU S2</text>
+        <text x="70"  y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">NPU StreamID</text>
+        <line x1="70" y1="78" x2="70" y2="110" stroke="#ffb84a" stroke-width="1" marker-end="url(#ar)" color="#ffb84a"/>
+
+        <rect x="160" y="110" width="120" height="52" rx="6" fill="#1a2030" stroke="#ff6b4a" stroke-width="1"/>
+        <text x="220" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a">SMMU S2</text>
+        <text x="220" y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">GPU StreamID</text>
+        <line x1="200" y1="78" x2="200" y2="110" stroke="#ffb84a" stroke-width="1" marker-end="url(#ar)" color="#ffb84a"/>
+
+        <rect x="10"  y="190" width="270" height="36" rx="6" fill="#2a1a10" stroke="#ffb84a" stroke-width="1"/>
+        <text x="145" y="213" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#ffb84a">SMMU_s_CONF locked — EL1 cannot modify</text>
+        <line x1="70"  y1="162" x2="70"  y2="190" stroke="#ffb84a" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#ar)" color="#ffb84a"/>
+        <line x1="220" y1="162" x2="220" y2="190" stroke="#ffb84a" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#ar)" color="#ffb84a"/>
+
+        <rect x="10"  y="255" width="120" height="48" rx="6" fill="#1a3a2a" stroke="#4aff9e" stroke-width="1"/>
+        <text x="70"  y="276" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#4aff9e">Linux RAM</text>
+        <text x="70"  y="294" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#6a7d9a">NPU/GPU: allowed</text>
+        <line x1="70" y1="226" x2="70" y2="255" stroke="#4aff9e" stroke-width="1.2" marker-end="url(#ar)" color="#4aff9e"/>
+
+        <rect x="160" y="255" width="120" height="48" rx="6" fill="#1a2a3a" stroke="#4a9eff" stroke-width="1"/>
+        <text x="220" y="276" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#4a9eff">Safety RTOS RAM</text>
+        <text x="220" y="294" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#6a7d9a">Linux domain: blocked</text>
+        <line x1="220" y1="226" x2="220" y2="255" stroke="#ff6b4a" stroke-width="1.2" stroke-dasharray="4 2" marker-end="url(#ar)" color="#ff6b4a"/>
+
+        <rect x="370" y="10"  width="270" height="290" rx="8" fill="#131720" stroke="#2a3348" stroke-width="1"/>
+        <text x="505" y="38"  text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#6a7d9a">EL1 Linux kernel</text>
+        <rect x="390" y="55"  width="230" height="48" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
+        <text x="505" y="76"  text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#4a9eff">Linux GPU driver</text>
+        <text x="505" y="93"  text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#6a7d9a">programs DMA descriptors</text>
+        <rect x="390" y="120" width="230" height="48" rx="5" fill="#3a1a1a" stroke="#ff6b4a" stroke-width="1"/>
+        <text x="505" y="141" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#ff6b4a">→ Safety RTOS addr</text>
+        <text x="505" y="158" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#6a7d9a">SMMU S2: unmapped fault</text>
+        <rect x="390" y="185" width="230" height="48" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
+        <text x="505" y="206" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a7d9a">Cannot modify SMMU</text>
+        <text x="505" y="223" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#6a7d9a">EL3 lock refuses all writes</text>
+        <line x1="370" y1="144" x2="310" y2="278" stroke="#ff6b4a" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#ar)" color="#ff6b4a"/>
+        <text x="328" y="215" font-family="IBM Plex Mono" font-size="9" fill="#ff6b4a" transform="rotate(-60,328,215)">blocked</text>
+      </svg>
+      <div class="step-desc">
+        In the AMP hypervisorless case, Stage 1 is <strong>disabled</strong> for DMA masters — not "identity mapped" as sometimes described. S2 is the sole translation stage. EL3 programs it statically during secure boot and locks the configuration registers. Linux root cannot reconfigure the SMMU. The isolation is hardware-permanent for the boot cycle.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PART 10: QUALCOMM ══ -->
+<section id="qualcomm">
+  <span class="section-num">Part 10</span>
+  <h2>Qualcomm Snapdragon: VMIDMT, XPU, and Multi-ROT Trust</h2>
+
+  <p>Qualcomm's official access control white paper for Snapdragon SoCs explicitly uses the initiator/target framing — one of the clearest vendor articulations of the unified framework. Three hardware components provide all access control on Snapdragon:</p>
+
+  <h3>VMIDMT — Virtual Master ID Mapping Table</h3>
+  <p>VMIDMT is the initiator-side identity injector. It takes hardware-fixed initiator identifier signals and maps them to outgoing security attributes — the <strong>VMID</strong> (Virtual Master ID) and the NS/Secure signal — that travel with every bus transaction. Multiple initiators can share one VMIDMT.</p>
+  <p>Structurally identical to ARM's MSW pattern: a component that wraps non-CPU masters and injects a domain identity onto their transactions. Each ROT domain controls VMID generation for its own domain exclusively — no ROT domain can influence another's security attributes.</p>
+
+  <h3>XPU — eXternal Protection Unit</h3>
+  <p>XPU is the target-side policy enforcer. It sits in front of memory and peripheral resources and checks incoming security attributes against its policy table. XPU operates in three modes determined at hardware design time:</p>
+  <ul style="max-width:var(--max-w);margin:12px 0 18px 24px;font-size:14px;line-height:1.8;color:var(--text-dim)">
+    <li><strong style="color:var(--text)">MPU mode:</strong> Software-programmable contiguous memory ranges (4 KB boundary aligned). Equivalent to ARM MPC/TZASC.</li>
+    <li><strong style="color:var(--text)">RPU mode:</strong> Fixed-size contiguous ranges, typically peripheral register banks. Equivalent to ARM PPC/TZPC.</li>
+    <li><strong style="color:var(--text)">APU mode:</strong> Fixed fragmented or contiguous ranges of varying sizes. More expressive than ARM's binary S/NS model — no direct ARM equivalent.</li>
+  </ul>
+  <p>Each resource group in an XPU has a single owning ROT domain. Only the owner can modify that group's access policy. The owner can share the resource with other domains by granting explicit R/W permissions — a capability-based model on top of the identity-based model.</p>
+
+  <h3>Multiple Mutually-Distrusting ROT Domains</h3>
+  <p>This is Qualcomm's most architecturally distinctive feature. ARM's model has one trust root (TrustZone at EL3). Snapdragon explicitly supports two independent, mutually-distrusting ROT domains — TrustZone and a separate Qualcomm ROT — each controlling their own VMIDMT outputs and XPU resource groups. Neither can modify the other's security attributes. This is more expressive than the binary ARM Secure/NonSecure hierarchy.</p>
+
+  <div class="trust-diagram">
+    <svg viewBox="0 0 500 200" style="width:100%;max-width:500px">
+      <rect x="120" y="10" width="120" height="44" rx="5" fill="#1a2030" stroke="#4a9eff" stroke-width="1"/>
+      <text x="180" y="36" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4a9eff">TrustZone ROT</text>
+      <rect x="340" y="10" width="130" height="44" rx="5" fill="#1a2030" stroke="#ff6b4a" stroke-width="1"/>
+      <text x="405" y="28" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#ff6b4a">Qualcomm ROT</text>
+      <text x="405" y="45" text-anchor="middle" font-family="IBM Plex Sans" font-size="9" fill="#6a7d9a">mutually distrusting</text>
+      <rect x="120" y="90" width="120" height="36" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
+      <text x="180" y="113" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a7d9a">Hypervisor (EL2)</text>
+      <line x1="180" y1="54" x2="180" y2="90" stroke="#2a3348" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
+      <rect x="30"  y="162" width="100" height="32" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
+      <text x="80"  y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">Domain 1</text>
+      <rect x="145" y="162" width="100" height="32" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
+      <text x="195" y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">Domain 2</text>
+      <rect x="260" y="162" width="100" height="32" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
+      <text x="310" y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">Domain 3</text>
+      <line x1="155" y1="126" x2="80"  y2="162" stroke="#2a3348" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
+      <line x1="180" y1="126" x2="195" y2="162" stroke="#2a3348" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
+      <line x1="205" y1="126" x2="310" y2="162" stroke="#2a3348" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
+    </svg>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:8px">Qualcomm trust hierarchy: two independent ROT domains, neither able to influence the other's security attributes. Hypervisor manages three security domains under TrustZone.</p>
+  </div>
+
+  <h3>The Firmware Authentication Use Case — The Pattern in Action</h3>
+  <p>Qualcomm's firmware authentication flow (visible in the Linux kernel as <code>qcom_scm_pas_auth_and_reset()</code>) illustrates the full three-part framework in concrete operation:</p>
+  <pre>1. CPU OS loads Video firmware from storage → DRAM
+   (CPU OS has full access at this point)
+
+2. CPU OS calls TrustZone via SMC, passes firmware address
+
+3. TrustZone validates the address range (no overlap)
+
+4. TrustZone programs XPU resource group:
+   → firmware DRAM region = Video CPU only (R/W)
+   → CPU OS access: revoked
+   (This is the target-side lock — identity × resource → policy)
+
+5. TrustZone authenticates the firmware signature
+
+6. If auth passes → releases Video CPU from reset
+
+7. Video CPU executes authenticated firmware</pre>
+  <p>This is structurally identical to AMD PSP + TMR and to any TEE-based multimedia firmware loading pattern. The pattern is universal across vendors.</p>
+</section>
+
+<!-- ══ PART 11: NXP ══ -->
+<section id="nxp">
+  <span class="section-num">Part 11</span>
+  <h2>NXP i.MX8x: RDC and CSU</h2>
+
+  <h3>RDC — Resource Domain Controller</h3>
+  <p>The RDC introduces <strong>Domain IDs (DIDs)</strong> — typically 4 domains (0–3) on i.MX8x. Every bus master is assigned a DID. The RDC controls access to memory regions and peripherals per-DID with independent R/W permissions per domain — a superset of TrustZone's binary S/NS model.</p>
+  <p>DID is the identity signal. RDC memory region registers are the target-side policy table. Domain 0 (safety RTOS) may have RW; Domain 1 (Linux) RO; Domain 2 (multimedia) none — independent per-domain permissions on the same resource.</p>
+
+  <h3>CSU — Central Security Unit</h3>
+  <p>The CSU provides per-peripheral security policy: SuperUser (privileged Secure access only), User (any access), or Off. Structurally equivalent to TZPC — a target-side peripheral gatekeeper. CSU operates at the peripheral-slot level while RDC operates at memory region and register level.</p>
+</section>
+
+<!-- ══ PART 12: XILINX ══ -->
+<section id="xilinx">
+  <span class="section-num">Part 12</span>
+  <h2>Xilinx/AMD UltraScale+ MPSOC: XMPU and XPPU</h2>
+
+  <p><strong>XMPU (Xilinx Memory Protection Unit)</strong> sits in front of memory controllers (DDR, OCM) and enforces per-region access control with a master whitelist per region. Each region specifies which AXI Master IDs are allowed access — a superset of the binary S/NS model, closer to Qualcomm's XPU resource group model.</p>
+
+  <p><strong>XPPU (Xilinx Peripheral Protection Unit)</strong> does the same for peripherals. Each peripheral specifies an allowed set of Master IDs. The AXI Master ID is the identity signal — equivalent to HNONSEC on ARM, DID on NXP, VMID on Qualcomm, StreamID in SMMU.</p>
+
+  <p>Xilinx's CSU (Configuration Security Unit) on UltraScale+ is the root-of-trust service hub — managing boot security, key provisioning, and hardware crypto acceleration. Not primarily an access controller; equivalent in role to ARM TF-A EL3 services.</p>
+</section>
+
+<!-- ══ PART 13: AMD ══ -->
+<section id="amd">
+  <span class="section-num">Part 13</span>
+  <h2>AMD GPU: TMR and TMZ</h2>
+
+  <h3>TMR — Trusted Memory Region (Access Control)</h3>
+  <p>TMR is a defined DRAM region that the GPU's PSP (Platform Security Processor — AMD's secure enclave equivalent) restricts to its own access. Other GPU engines and the host CPU cannot access it. Structurally equivalent to TZASC: a target-side range checker at the GPU memory controller.</p>
+
+  <h3>TMZ — Trusted Memory Zone (Confidentiality)</h3>
+  <p>TMZ is a <strong>confidentiality mechanism</strong>, not an access controller. Memory pages marked as TMZ are encrypted/decrypted transparently by the GPU memory controller using a per-context key. Even if another master DMA-reads the physical RAM, it gets ciphertext. This sits at Layer 7 in the defence-in-depth stack — rendering data useless even when access control is bypassed by a physical attacker.</p>
+</section>
+
+<!-- ══ PART 14: FFI ══ -->
+<section id="ffi">
+  <span class="section-num">Part 14</span>
+  <h2>Security and Safety Are the Same Problem</h2>
+
+  <p>The security framing is obvious: prevent unauthorised access. The safety framing — <strong>Freedom from Interference (FFI)</strong> in IEC 61508, ISO 26262, and ISO 13849 — is less obviously the same thing, but it is.</p>
+
+  <p>FFI requires that a lower-integrity component (AI inference engine, comfort ECU, multimedia subsystem) cannot corrupt the memory or timing of a higher-integrity component (brake controller, motor safety function, safety PLC). Spatial isolation — the same MPC, IO-SMMU, TZASC, and XPU enforcement — is the hardware basis for that claim.</p>
+
+  <div class="mech-table" style="max-width:var(--max-w)">
+    <table class="mech-table">
+      <thead><tr><th>Safety Requirement</th><th>Hardware Mechanism</th></tr></thead>
+      <tbody>
+        <tr><td>AI engine cannot write to motor SRAM</td><td><span class="mname">SMMU S2</span> (hypervisor) or EL3-locked S2 (AMP)</td></tr>
+        <tr><td>Linux cannot DMA to safety RTOS memory</td><td><span class="mname">SMMU</span> static partition + register lock</td></tr>
+        <tr><td>GPU firmware in secure environment</td><td><span class="mname">TMR + PSP</span> attestation / <span class="mname">XPU + QSEE</span></td></tr>
+        <tr><td>Multimedia microcode in trusted memory</td><td><span class="mname">TZASC</span> carve-out + Secure World validation</td></tr>
+        <tr><td>i.MX8x RTOS protected from Linux DMA</td><td><span class="mname">RDC</span> domain separation</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══ PART 15: MPAM ══ -->
+<section id="mpam">
+  <span class="section-num">Part 15</span>
+  <h2>MPAM: Temporal Isolation — The Missing Half of FFI</h2>
+
+  <p>Spatial isolation prevents a non-safety component from <em>writing</em> to safety memory. But it cannot prevent it from <em>starving</em> the safety controller of cache capacity or DRAM bandwidth, causing deadline misses. This is temporal interference — and it breaks FFI just as surely as a memory write would.</p>
+
+  <p>ARM's MPAM (Memory System Resource Partitioning and Monitoring, ARMv8.4-A) extends the three-part framework to <strong>time-domain resources</strong>:</p>
+
+  <div class="formula-block">
+    <div class="formula" style="font-size:14px">
+      <span class="f-id">PARTID</span>
+      <span class="f-op"> (identity) × </span>
+      <span class="f-res">cache ways / DRAM bandwidth</span>
+      <span class="f-op"> (resource) → </span>
+      <span class="f-pol">allocation limit / bandwidth cap</span>
+      <span class="f-op"> (policy)</span>
+    </div>
+  </div>
+
+  <h3>Cache Partitioning</h3>
+  <p>MPAM-aware caches assign each PARTID a subset of cache ways. A process with PARTID 2 can only occupy the cache ways assigned to partition 2 — it cannot evict cache lines belonging to PARTID 1 (the safety partition). Cache behaviour becomes deterministic per-partition, enabling WCET analysis closure.</p>
+
+  <h3>DRAM Bandwidth Control</h3>
+  <p>Each PARTID can be assigned a maximum DRAM bandwidth share. An NPU running matrix multiply at full bandwidth cannot starve the safety controller's memory accesses. The "noisy neighbour" problem is replaced by bounded, deterministic resource allocation.</p>
+
+  <div class="callout warn">
+    <span class="callout-label">Incomplete safety architectures</span>
+    Most mixed-criticality architectures have partial spatial isolation (SMMU) and no temporal isolation (MPAM). This means the safety argument cannot be closed — WCET analysis of safety functions remains open, and the FFI claim is incomplete under IEC 61508 or ISO 26262.
+  </div>
+</section>
+
+<!-- ══ PART 16: LOCK ══ -->
+<section id="lock">
+  <span class="section-num">Part 16</span>
+  <h2>The Lock Pattern: The Step Everyone Forgets</h2>
+
+  <p>Every mechanism discussed needs a <strong>configuration lock</strong> to be hardware-enforced rather than merely software-configured. Without it, the isolation is a software convention — not a hardware guarantee.</p>
+
+  <div class="layer-stack">
+    <div class="layer"><span class="layer-num">1</span><span class="layer-name">Reset</span><span class="layer-desc">Hardware defaults apply — fail-secure state, everything maximally restricted</span></div>
+    <div class="layer-connector"></div>
+    <div class="layer"><span class="layer-num">2</span><span class="layer-name">EL3 / Secure FW</span><span class="layer-desc">Configures SAU, MPC, PPC, TGU, SMMU S2, TZASC, RDC, MPAM partitions</span></div>
+    <div class="layer-connector"></div>
+    <div class="layer" style="border-color:var(--accent4)"><span class="layer-num">3</span><span class="layer-name" style="color:var(--accent4)">Lock registers</span><span class="layer-desc">SSC/HDP, SMMU_s_CONF, EL3 write-protect, TZASC lock, XPU ownership — welded shut</span></div>
+    <div class="layer-connector"></div>
+    <div class="layer"><span class="layer-num">4</span><span class="layer-name">Untrusted SW</span><span class="layer-desc">Linux, Guest VMs, NS apps launch — cannot modify any protection configuration</span></div>
+    <div class="layer-connector"></div>
+    <div class="layer"><span class="layer-num">5</span><span class="layer-name">Reset</span><span class="layer-desc">Back to step 1 — policy is re-provisioned fresh each boot cycle</span></div>
+  </div>
+
+  <p>Security and safety configuration is a <strong>boot-time transaction</strong>, not a runtime API. This mental model shift is the difference between an architecture an evaluator will accept and one that won't pass scrutiny.</p>
+</section>
+
+<!-- ══ PART 17: UNIFIED TABLE ══ -->
+<section id="table">
+  <span class="section-num">Part 17</span>
+  <h2>Unified Lookup Table</h2>
+  <p>Every mechanism mapped to the four-part template: identity signal, resource type, enforcement side, policy authority.</p>
+
+  <div style="overflow-x:auto">
+  <table class="mech-table">
+    <thead>
+      <tr>
+        <th>Mechanism</th>
+        <th>Identity Signal</th>
+        <th>Resource</th>
+        <th>Side</th>
+        <th>Policy Authority</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mname">SAU / IDAU</td><td>CPU TrustZone state (HNONSEC)</td><td>Memory address range</td><td><span class="tag-i">Initiator</span></td><td>Secure FW, SSC-locked</td></tr>
+      <tr><td class="mname">MPU</td><td>Privilege level (HPROT)</td><td>Memory address range</td><td><span class="tag-i">Initiator</span></td><td>OS / Secure FW</td></tr>
+      <tr><td class="mname">MPC / MPCBB</td><td>HNONSEC on bus</td><td>SRAM / NVM block</td><td><span class="tag-t">Target</span></td><td>Secure FW, HDP-locked</td></tr>
+      <tr><td class="mname">PPC / TZPC</td><td>HNONSEC on bus</td><td>Peripheral register bank</td><td><span class="tag-t">Target</span></td><td>Secure FW</td></tr>
+      <tr><td class="mname">TGU (ITGU/DTGU)</td><td>CPU TrustZone state</td><td>TCM page</td><td><span class="tag-t">Target</span></td><td>Secure FW, SSC-locked</td></tr>
+      <tr><td class="mname">MSW</td><td>Injected HNONSEC/HPROT</td><td>N/A (identity assignment)</td><td><span class="tag-i">Initiator</span></td><td>Secure FW (boot-time)</td></tr>
+      <tr><td class="mname">TZASC / TZC-400</td><td>HNONSEC on AXI</td><td>DRAM address range</td><td><span class="tag-t">Target</span></td><td>Secure FW / EL3</td></tr>
+      <tr><td class="mname">SMMU Stage 1</td><td>StreamID → VA translation</td><td>Address space</td><td><span class="tag-i">Initiator</span></td><td>Guest OS / EL1</td></tr>
+      <tr><td class="mname">SMMU Stage 2</td><td>StreamID → IPA gate</td><td>Physical address range</td><td><span class="tag-t">Target</span></td><td>Hypervisor EL2 / EL3 FW</td></tr>
+      <tr><td class="mname">Qualcomm VMIDMT</td><td>Initiator ID → VMID + NS signal</td><td>N/A (identity assignment)</td><td><span class="tag-i">Initiator</span></td><td>ROT domain (TZ or QTI)</td></tr>
+      <tr><td class="mname">Qualcomm XPU</td><td>VMID + NS signal</td><td>Memory / peripheral (MPU/RPU/APU)</td><td><span class="tag-t">Target</span></td><td>Resource group owner (ROT)</td></tr>
+      <tr><td class="mname">NXP RDC</td><td>Domain ID (DID)</td><td>Memory region + peripheral</td><td><span class="tag-t">Target</span></td><td>EL3 / Secure world</td></tr>
+      <tr><td class="mname">NXP CSU</td><td>Master identity</td><td>Peripheral slot</td><td><span class="tag-t">Target</span></td><td>EL3 / Secure world</td></tr>
+      <tr><td class="mname">Xilinx XMPU</td><td>AXI Master ID</td><td>Memory region (whitelist)</td><td><span class="tag-t">Target</span></td><td>EL3 / Secure world</td></tr>
+      <tr><td class="mname">Xilinx XPPU</td><td>AXI Master ID</td><td>Peripheral (whitelist)</td><td><span class="tag-t">Target</span></td><td>EL3 / Secure world</td></tr>
+      <tr><td class="mname">AMD TMR</td><td>PSP domain identity</td><td>DRAM region (GPU)</td><td><span class="tag-t">Target</span></td><td>PSP (AMD Secure Processor)</td></tr>
+      <tr><td class="mname">AMD TMZ</td><td>Per-context encryption key</td><td>DRAM page (GPU)</td><td><span class="tag-t">Target</span></td><td>PSP / GPU driver</td></tr>
+      <tr><td class="mname">ARM MPAM</td><td>PARTID</td><td>Cache ways / DRAM bandwidth</td><td><span class="tag-t">Target</span></td><td>Hypervisor / EL3</td></tr>
+      <tr><td class="mname">DACR (AArch32)</td><td>Domain number (page table)</td><td>Memory page (by domain)</td><td><span class="tag-i">Initiator</span></td><td>OS kernel</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ══ PART 18: CHECKLIST ══ -->
+<section id="checklist">
+  <span class="section-num">Part 18</span>
+  <h2>Engineer Checklist</h2>
+  <p>Interactive checklist for architecture review. Click to mark items complete.</p>
+
+  <div class="checklist">
+    <div class="check-group">
+      <div class="check-group-title">CPU-side coverage</div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>SAU/IDAU configured for all needed memory regions</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>SAU configuration locked (SSC/HDP) before untrusted SW launches</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>NSC veneer regions correctly placed — no arbitrary Secure entry points</span></div>
+    </div>
+    <div class="check-group">
+      <div class="check-group-title">Non-CPU master coverage</div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>Every DMA master identified and its MSW/VMIDMT/StreamID assigned</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>SMMU/XMPU configured before untrusted OS launches</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>SMMU S2 / XMPU policy locked (EL3-locked) — Linux cannot reconfigure</span></div>
+    </div>
+    <div class="check-group">
+      <div class="check-group-title">Target-side coverage</div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>Every Secure/restricted SRAM region behind MPC or XMPU</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>Every Secure peripheral behind PPC/TZPC/XPU — not SAU alone</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>TCM guarded by TGU (not relying on AHB-path MPC)</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>TEE DRAM carve-out protected by TZASC or equivalent</span></div>
+    </div>
+    <div class="check-group">
+      <div class="check-group-title">Violation monitoring</div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>TZIC / violation IRQ configured — secure FW receives illegal access events</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>Violation response mode documented (fault vs RAZ/WI) per resource</span></div>
+    </div>
+    <div class="check-group">
+      <div class="check-group-title">Safety / FFI additions</div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>Spatial FFI: every non-safety DMA master has SMMU S2 domain separation</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>Temporal FFI: MPAM PARTID assigned to safety partition — cache ways bounded</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>DRAM bandwidth capped for non-safety PARTID — WCET analysis closeable</span></div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><span>MPAM configuration locked before non-safety OS launches</span></div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /content -->
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="footer-title">About this project</div>
+      <p>An open, evolving knowledge library on hardware security and safety isolation mechanisms. Contributions welcome — see <a href="../../CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+      <p style="margin-top:12px">Licensed under <a href="../../LICENSE">CC BY 4.0</a>. Attribution required.</p>
+    </div>
+    <div>
+      <div class="footer-title">Contribute</div>
+      <p>New mechanism deep-dives, platform analyses, safety certification case studies, and diagram improvements are all welcome. See the <a href="https://github.com/zlhk100/hw-security-safety-isolation">GitHub repository</a> for the contribution guide.</p>
+    </div>
+  </div>
+  <p style="color:var(--text-dim);font-size:12px">This analysis draws on work across PSA Certified Level 2 certification for Cortex-M55, IO-SMMU-based mixed-criticality platforms, and comparative architecture review of STM32U585, NXP i.MX8x, Xilinx UltraScale+ MPSOC, and Qualcomm Snapdragon. Qualcomm architecture section based on Qualcomm Technologies, Inc. public white paper "An Introduction to Access Control on Qualcomm Snapdragon Platforms" (2020).</p>
+</footer>
+
+</main>
+
+<script>
+// ── SCROLLSPY ──
+const sections = document.querySelectorAll('section[id]');
+const navLinks  = document.querySelectorAll('nav a');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => a.classList.remove('active'));
+      const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => obs.observe(s));
+
+// ── SMMU STEPPER ──
+const steps = [
+  { arrows: [], desc: "The device (NPU/GPU/DMA) issues a DMA request with a virtual address. The SMMU looks up the StreamID in the Stream Table to find the correct translation context. S2 is not called once at the end — it is invoked at every level of the S1 walk." },
+  { arrows: ['a1','a2'], desc: "S1 L1 lookup: the pointer to the S1 L1 table is itself an IPA. Before the SMMU can even read that table, it must resolve the pointer through S2 check #1. The Guest OS owns S1 — but S2 is already in the loop on the very first step." },
+  { arrows: ['a1','a2','a3','a4'], desc: "S1 L2 lookup: the L1 entry points to an L2 table — again an IPA. S2 check #2 fires before the SMMU reads L2. A compromised Guest OS cannot point its L1 table at safety-critical memory because the pointer itself must resolve through S2." },
+  { arrows: ['a1','a2','a3','a4','a5','a6'], desc: "S1 leaf PTE: the leaf entry's output IPA goes through S2 check #3. This produces the real physical address. There is no path through the SMMU walk logic that avoids the Stage 2 gate — S2 is invoked 3+ times for a 3-level S1 walk." },
+  { arrows: ['a1','a2','a3','a4','a5','a6','a7','a8'], desc: "S2 is the hard boundary. If the final IPA is within the allowed domain → PA delivered, DMA proceeds (green). If the IPA maps to another domain's memory (e.g., the safety RTOS) → S2 fault, DMA terminated (red). The Guest OS software has zero ability to change this outcome." }
+];
+let cur = 0;
+
+function goStep(i, btn) {
+  cur = i;
+  document.querySelectorAll('.step-btn').forEach((b,j) => b.classList.toggle('on', j===i));
+  document.querySelectorAll('.dot').forEach((d,j) => d.classList.toggle('on', j<=i));
+  const s = steps[i];
+  ['a1','a2','a3','a4','a5','a6','a7','a8'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('opacity', s.arrows.includes(id) ? '1' : '0');
+  });
+  ['rok','rokt','rfail','rfailt'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('opacity', i===4 ? '1' : '0');
+  });
+  document.getElementById('sdesc').innerHTML = s.desc;
+}
+
+function showTab(id, btn) {
+  document.getElementById('tab-hyp').style.display = id==='hyp' ? 'block' : 'none';
+  document.getElementById('tab-amp').style.display = id==='amp' ? 'block' : 'none';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('sel', b===btn));
+}
+</script>
+</body>
+</html>
