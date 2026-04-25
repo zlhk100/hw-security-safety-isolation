@@ -9,20 +9,20 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:        #0c0f14;
-  --bg2:       #131720;
-  --bg3:       #1a2030;
-  --border:    #2a3348;
-  --text:      #c8d4e8;
-  --text-dim:  #6a7d9a;
-  --text-head: #e8eef8;
-  --accent:    #4a9eff;
-  --accent2:   #ff6b4a;
-  --accent3:   #4aff9e;
-  --accent4:   #ffb84a;
-  --tag-init:  #1a3a5c;
-  --tag-tgt:   #3a1a1a;
-  --tag-both:  #1a3a2a;
+  --bg:        #faf7f2;
+  --bg2:       #f3ede4;
+  --bg3:       #ede5d8;
+  --border:    #d6cab8;
+  --text:      #3a2e22;
+  --text-dim:  #7a6a55;
+  --text-head: #1e1610;
+  --accent:    #1a6fb5;
+  --accent2:   #c0440e;
+  --accent3:   #1a7a4a;
+  --accent4:   #a05c00;
+  --tag-init:  #dceeff;
+  --tag-tgt:   #fde8e0;
+  --tag-both:  #ddf2e8;
   --mono: 'IBM Plex Mono', monospace;
   --sans: 'IBM Plex Sans', sans-serif;
   --serif: 'Fraunces', serif;
@@ -877,38 +877,38 @@ EL0  Secure/NS     Applications, Trusted Apps</pre>
           </marker>
         </defs>
         <!-- Device -->
-        <rect x="10" y="10" width="120" height="52" rx="6" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
+        <rect x="10" y="10" width="120" height="52" rx="6" fill="#eee8de" stroke="#c8b89a" stroke-width="1"/>
         <text x="70" y="32" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4a9eff">Device (NPU)</text>
-        <text x="70" y="50" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">issues VA</text>
+        <text x="70" y="50" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">issues VA</text>
         <!-- SMMU -->
-        <rect x="10" y="94" width="120" height="52" rx="6" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
-        <text x="70" y="116" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#6a7d9a">SMMU</text>
-        <text x="70" y="133" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">StreamID→STE</text>
-        <line x1="70" y1="62" x2="70" y2="94" stroke="#2a3348" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
+        <rect x="10" y="94" width="120" height="52" rx="6" fill="#eee8de" stroke="#c8b89a" stroke-width="1"/>
+        <text x="70" y="116" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#7a6a55">SMMU</text>
+        <text x="70" y="133" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">StreamID→STE</text>
+        <line x1="70" y1="62" x2="70" y2="94" stroke="#c8b89a" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
         <!-- S1 column -->
-        <rect x="190" y="10"  width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s1l1" stroke-width="1"/>
+        <rect x="190" y="10"  width="140" height="52" rx="6" fill="#eee8de" stroke="#c8b89a" id="s1l1" stroke-width="1"/>
         <text x="260" y="32"  text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4aff9e">S1 L1 table</text>
-        <text x="260" y="50"  text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">Guest OS (IPA)</text>
-        <rect x="190" y="110" width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s1l2" stroke-width="1"/>
+        <text x="260" y="50"  text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">Guest OS (IPA)</text>
+        <rect x="190" y="110" width="140" height="52" rx="6" fill="#eee8de" stroke="#c8b89a" id="s1l2" stroke-width="1"/>
         <text x="260" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4aff9e">S1 L2 table</text>
-        <text x="260" y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">pointed by L1 (IPA)</text>
-        <rect x="190" y="210" width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s1lf" stroke-width="1"/>
+        <text x="260" y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">pointed by L1 (IPA)</text>
+        <rect x="190" y="210" width="140" height="52" rx="6" fill="#eee8de" stroke="#c8b89a" id="s1lf" stroke-width="1"/>
         <text x="260" y="232" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4aff9e">S1 leaf PTE</text>
-        <text x="260" y="250" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">output IPA</text>
+        <text x="260" y="250" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">output IPA</text>
         <!-- S2 column -->
-        <rect x="430" y="10"  width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s2a" stroke-width="1"/>
+        <rect x="430" y="10"  width="140" height="52" rx="6" fill="#eee8de" stroke="#c8b89a" id="s2a" stroke-width="1"/>
         <text x="500" y="32"  text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a">S2 check #1</text>
-        <text x="500" y="50"  text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">L1 ptr IPA→PA</text>
-        <rect x="430" y="110" width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s2b" stroke-width="1"/>
+        <text x="500" y="50"  text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">L1 ptr IPA→PA</text>
+        <rect x="430" y="110" width="140" height="52" rx="6" fill="#eee8de" stroke="#c8b89a" id="s2b" stroke-width="1"/>
         <text x="500" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a">S2 check #2</text>
-        <text x="500" y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">L2 ptr IPA→PA</text>
-        <rect x="430" y="210" width="140" height="52" rx="6" fill="#1a2030" stroke="#2a3348" id="s2c" stroke-width="1"/>
+        <text x="500" y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">L2 ptr IPA→PA</text>
+        <rect x="430" y="210" width="140" height="52" rx="6" fill="#eee8de" stroke="#c8b89a" id="s2c" stroke-width="1"/>
         <text x="500" y="232" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a">S2 check #3</text>
-        <text x="500" y="250" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">leaf IPA→real PA</text>
+        <text x="500" y="250" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">leaf IPA→real PA</text>
         <!-- Results -->
-        <rect x="430" y="285" width="140" height="36" rx="6" fill="#1a3a2a" stroke="#4aff9e" id="rok" stroke-width="1" opacity="0"/>
+        <rect x="430" y="285" width="140" height="36" rx="6" fill="#d4f0e4" stroke="#4aff9e" id="rok" stroke-width="1" opacity="0"/>
         <text x="500" y="308" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4aff9e" id="rokt" opacity="0">PA delivered ✓</text>
-        <rect x="190" y="285" width="140" height="36" rx="6" fill="#3a1a1a" stroke="#ff6b4a" id="rfail" stroke-width="1" opacity="0"/>
+        <rect x="190" y="285" width="140" height="36" rx="6" fill="#fde0d4" stroke="#ff6b4a" id="rfail" stroke-width="1" opacity="0"/>
         <text x="260" y="308" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a" id="rfailt" opacity="0">S2 fault — blocked</text>
         <!-- Arrows (initially hidden) -->
         <line id="a1" x1="130" y1="120" x2="190" y2="36"  stroke="#4a9eff" stroke-width="1.2" marker-end="url(#ar)" opacity="0" color="#4a9eff"/>
@@ -929,46 +929,46 @@ EL0  Secure/NS     Applications, Trusted Apps</pre>
     <!-- AMP TAB -->
     <div class="amp-panel" id="tab-amp">
       <svg viewBox="0 0 660 320" style="width:100%">
-        <rect x="10"  y="10"  width="280" height="68" rx="6" fill="#1a2a10" stroke="#ffb84a" stroke-width="1"/>
+        <rect x="10"  y="10"  width="280" height="68" rx="6" fill="#e8f4d8" stroke="#ffb84a" stroke-width="1"/>
         <text x="150" y="36"  text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ffb84a">EL3 Secure Firmware (TF-A)</text>
-        <text x="150" y="56"  text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">programs S2 tables + locks SMMU config</text>
+        <text x="150" y="56"  text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">programs S2 tables + locks SMMU config</text>
 
-        <rect x="10"  y="110" width="120" height="52" rx="6" fill="#1a2030" stroke="#ff6b4a" stroke-width="1"/>
+        <rect x="10"  y="110" width="120" height="52" rx="6" fill="#eee8de" stroke="#ff6b4a" stroke-width="1"/>
         <text x="70"  y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a">SMMU S2</text>
-        <text x="70"  y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">NPU StreamID</text>
+        <text x="70"  y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">NPU StreamID</text>
         <line x1="70" y1="78" x2="70" y2="110" stroke="#ffb84a" stroke-width="1" marker-end="url(#ar)" color="#ffb84a"/>
 
-        <rect x="160" y="110" width="120" height="52" rx="6" fill="#1a2030" stroke="#ff6b4a" stroke-width="1"/>
+        <rect x="160" y="110" width="120" height="52" rx="6" fill="#eee8de" stroke="#ff6b4a" stroke-width="1"/>
         <text x="220" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ff6b4a">SMMU S2</text>
-        <text x="220" y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">GPU StreamID</text>
+        <text x="220" y="150" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">GPU StreamID</text>
         <line x1="200" y1="78" x2="200" y2="110" stroke="#ffb84a" stroke-width="1" marker-end="url(#ar)" color="#ffb84a"/>
 
-        <rect x="10"  y="190" width="270" height="36" rx="6" fill="#2a1a10" stroke="#ffb84a" stroke-width="1"/>
+        <rect x="10"  y="190" width="270" height="36" rx="6" fill="#f4e4d0" stroke="#ffb84a" stroke-width="1"/>
         <text x="145" y="213" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#ffb84a">SMMU_s_CONF locked — EL1 cannot modify</text>
         <line x1="70"  y1="162" x2="70"  y2="190" stroke="#ffb84a" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#ar)" color="#ffb84a"/>
         <line x1="220" y1="162" x2="220" y2="190" stroke="#ffb84a" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#ar)" color="#ffb84a"/>
 
-        <rect x="10"  y="255" width="120" height="48" rx="6" fill="#1a3a2a" stroke="#4aff9e" stroke-width="1"/>
+        <rect x="10"  y="255" width="120" height="48" rx="6" fill="#d4f0e4" stroke="#4aff9e" stroke-width="1"/>
         <text x="70"  y="276" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#4aff9e">Linux RAM</text>
-        <text x="70"  y="294" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#6a7d9a">NPU/GPU: allowed</text>
+        <text x="70"  y="294" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#7a6a55">NPU/GPU: allowed</text>
         <line x1="70" y1="226" x2="70" y2="255" stroke="#4aff9e" stroke-width="1.2" marker-end="url(#ar)" color="#4aff9e"/>
 
-        <rect x="160" y="255" width="120" height="48" rx="6" fill="#1a2a3a" stroke="#4a9eff" stroke-width="1"/>
+        <rect x="160" y="255" width="120" height="48" rx="6" fill="#d4e8f4" stroke="#4a9eff" stroke-width="1"/>
         <text x="220" y="276" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#4a9eff">Safety RTOS RAM</text>
-        <text x="220" y="294" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#6a7d9a">Linux domain: blocked</text>
+        <text x="220" y="294" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#7a6a55">Linux domain: blocked</text>
         <line x1="220" y1="226" x2="220" y2="255" stroke="#ff6b4a" stroke-width="1.2" stroke-dasharray="4 2" marker-end="url(#ar)" color="#ff6b4a"/>
 
-        <rect x="370" y="10"  width="270" height="290" rx="8" fill="#131720" stroke="#2a3348" stroke-width="1"/>
-        <text x="505" y="38"  text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#6a7d9a">EL1 Linux kernel</text>
-        <rect x="390" y="55"  width="230" height="48" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
+        <rect x="370" y="10"  width="270" height="290" rx="8" fill="#f3ede4" stroke="#c8b89a" stroke-width="1"/>
+        <text x="505" y="38"  text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#7a6a55">EL1 Linux kernel</text>
+        <rect x="390" y="55"  width="230" height="48" rx="5" fill="#eee8de" stroke="#c8b89a" stroke-width="1"/>
         <text x="505" y="76"  text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#4a9eff">Linux GPU driver</text>
-        <text x="505" y="93"  text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#6a7d9a">programs DMA descriptors</text>
-        <rect x="390" y="120" width="230" height="48" rx="5" fill="#3a1a1a" stroke="#ff6b4a" stroke-width="1"/>
+        <text x="505" y="93"  text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#7a6a55">programs DMA descriptors</text>
+        <rect x="390" y="120" width="230" height="48" rx="5" fill="#fde0d4" stroke="#ff6b4a" stroke-width="1"/>
         <text x="505" y="141" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#ff6b4a">→ Safety RTOS addr</text>
-        <text x="505" y="158" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#6a7d9a">SMMU S2: unmapped fault</text>
-        <rect x="390" y="185" width="230" height="48" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
-        <text x="505" y="206" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a7d9a">Cannot modify SMMU</text>
-        <text x="505" y="223" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#6a7d9a">EL3 lock refuses all writes</text>
+        <text x="505" y="158" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#7a6a55">SMMU S2: unmapped fault</text>
+        <rect x="390" y="185" width="230" height="48" rx="5" fill="#eee8de" stroke="#c8b89a" stroke-width="1"/>
+        <text x="505" y="206" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#7a6a55">Cannot modify SMMU</text>
+        <text x="505" y="223" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"  fill="#7a6a55">EL3 lock refuses all writes</text>
         <line x1="370" y1="144" x2="310" y2="278" stroke="#ff6b4a" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#ar)" color="#ff6b4a"/>
         <text x="328" y="215" font-family="IBM Plex Mono" font-size="9" fill="#ff6b4a" transform="rotate(-60,328,215)">blocked</text>
       </svg>
@@ -1004,23 +1004,23 @@ EL0  Secure/NS     Applications, Trusted Apps</pre>
 
   <div class="trust-diagram">
     <svg viewBox="0 0 500 200" style="width:100%;max-width:500px">
-      <rect x="120" y="10" width="120" height="44" rx="5" fill="#1a2030" stroke="#4a9eff" stroke-width="1"/>
+      <rect x="120" y="10" width="120" height="44" rx="5" fill="#eee8de" stroke="#4a9eff" stroke-width="1"/>
       <text x="180" y="36" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4a9eff">TrustZone ROT</text>
-      <rect x="340" y="10" width="130" height="44" rx="5" fill="#1a2030" stroke="#ff6b4a" stroke-width="1"/>
+      <rect x="340" y="10" width="130" height="44" rx="5" fill="#eee8de" stroke="#ff6b4a" stroke-width="1"/>
       <text x="405" y="28" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#ff6b4a">Qualcomm ROT</text>
-      <text x="405" y="45" text-anchor="middle" font-family="IBM Plex Sans" font-size="9" fill="#6a7d9a">mutually distrusting</text>
-      <rect x="120" y="90" width="120" height="36" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
-      <text x="180" y="113" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a7d9a">Hypervisor (EL2)</text>
-      <line x1="180" y1="54" x2="180" y2="90" stroke="#2a3348" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
-      <rect x="30"  y="162" width="100" height="32" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
-      <text x="80"  y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">Domain 1</text>
-      <rect x="145" y="162" width="100" height="32" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
-      <text x="195" y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">Domain 2</text>
-      <rect x="260" y="162" width="100" height="32" rx="5" fill="#1a2030" stroke="#2a3348" stroke-width="1"/>
-      <text x="310" y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#6a7d9a">Domain 3</text>
-      <line x1="155" y1="126" x2="80"  y2="162" stroke="#2a3348" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
-      <line x1="180" y1="126" x2="195" y2="162" stroke="#2a3348" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
-      <line x1="205" y1="126" x2="310" y2="162" stroke="#2a3348" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
+      <text x="405" y="45" text-anchor="middle" font-family="IBM Plex Sans" font-size="9" fill="#7a6a55">mutually distrusting</text>
+      <rect x="120" y="90" width="120" height="36" rx="5" fill="#eee8de" stroke="#c8b89a" stroke-width="1"/>
+      <text x="180" y="113" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#7a6a55">Hypervisor (EL2)</text>
+      <line x1="180" y1="54" x2="180" y2="90" stroke="#c8b89a" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
+      <rect x="30"  y="162" width="100" height="32" rx="5" fill="#eee8de" stroke="#c8b89a" stroke-width="1"/>
+      <text x="80"  y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">Domain 1</text>
+      <rect x="145" y="162" width="100" height="32" rx="5" fill="#eee8de" stroke="#c8b89a" stroke-width="1"/>
+      <text x="195" y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">Domain 2</text>
+      <rect x="260" y="162" width="100" height="32" rx="5" fill="#eee8de" stroke="#c8b89a" stroke-width="1"/>
+      <text x="310" y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">Domain 3</text>
+      <line x1="155" y1="126" x2="80"  y2="162" stroke="#c8b89a" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
+      <line x1="180" y1="126" x2="195" y2="162" stroke="#c8b89a" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
+      <line x1="205" y1="126" x2="310" y2="162" stroke="#c8b89a" stroke-width="1" marker-end="url(#ar)" color="#2a3348"/>
     </svg>
     <p style="font-size:12px;color:var(--text-dim);margin-top:8px">Qualcomm trust hierarchy: two independent ROT domains, neither able to influence the other's security attributes. Hypervisor manages three security domains under TrustZone.</p>
   </div>
