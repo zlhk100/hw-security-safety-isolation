@@ -48,6 +48,12 @@ hw-security-safety-isolation/
 └── use-cases/             ← safety+security co-design patterns (growing)
 ```
 
+**Part of a three-layer series.**
+ Layer 1 (this repo): isolation mechanisms.
+ Layer 3: [IoT Security Lifecycle](https://github.com/zlhk100/iot-security-lifecycle)
+ — threat model, regulation, and lifecycle engineering.
+
+
 ### The Main Article
 
 **[→ Read the interactive article](https://zlhk100.github.io/hw-security-safety-isolation/article/)**
