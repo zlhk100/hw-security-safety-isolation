@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARM CCA + KVM: How Realm VMs Work with RME</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600&family=Fraunces:wght@300;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #faf7f2; --bg2: #f3ede4; --bg3: #ede5d8;
+  --border: #d6cab8; --text: #3a2e22; --dim: #7a6a55;
+  --head: #1e1610;
+  --normal: #1a5c8a;  /* blue - Normal world */
+  --realm:  #1a7a4a;  /* green - Realm world */
+  --root:   #8a4a00;  /* amber - Root world */
+  --secure: #6a1a6a;  /* purple - Secure world */
+  --gpt:    #c0440e;  /* coral - GPT/GPC */
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'Fraunces', serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.75; padding: 40px 48px; max-width: 960px; margin: 0 auto; }
+h1 { font-family: var(--serif); font-size: 32px; font-weight: 700; color: var(--head); margin-bottom: 8px; }
+h2 { font-family: var(--serif); font-size: 22px; font-weight: 700; color: var(--head); margin: 48px 0 12px; }
+h3 { font-family: var(--sans); font-size: 16px; font-weight: 600; color: var(--head); margin: 32px 0 8px; }
+p { margin-bottom: 16px; max-width: 720px; }
+.kicker { font-family: var(--mono); font-size: 11px; letter-spacing: .15em; text-transform: uppercase; color: var(--normal); margin-bottom: 20px; }
+.callout { border-left: 3px solid var(--normal); background: var(--bg2); padding: 16px 20px; border-radius: 4px; margin: 20px 0; font-size: 14px; max-width: 720px; }
+.callout.realm { border-left-color: var(--realm); }
+.callout.root  { border-left-color: var(--root); }
+.callout.warn  { border-left-color: var(--gpt); }
+.callout-label { font-family: var(--mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--normal); display: block; margin-bottom: 6px; }
+.callout.realm .callout-label { color: var(--realm); }
+.callout.root  .callout-label { color: var(--root); }
+.callout.warn  .callout-label { color: var(--gpt); }
+pre { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 18px 22px; font-family: var(--mono); font-size: 12px; line-height: 1.7; color: var(--dim); margin: 16px 0; overflow-x: auto; max-width: 720px; }
+code { font-family: var(--mono); font-size: 12px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--normal); }
+table { border-collapse: collapse; width: 100%; max-width: 720px; margin: 16px 0; font-size: 13px; }
+th { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 9px 12px; border-bottom: 1px solid rgba(214,202,184,.4); vertical-align: top; }
+.world-n { color: var(--normal); font-weight: 600; font-family: var(--mono); font-size: 12px; }
+.world-r { color: var(--realm); font-weight: 600; font-family: var(--mono); font-size: 12px; }
+.world-ro{ color: var(--root);  font-weight: 600; font-family: var(--mono); font-size: 12px; }
+.world-s { color: var(--secure);font-weight: 600; font-family: var(--mono); font-size: 12px; }
+svg { width: 100%; margin: 24px 0; }
+</style>
+</head>
+<body>
+
+<div class="kicker">ARM CCA · RME · KVM · Confidential Computing</div>
+<h1>ARM CCA + KVM:<br>How Multiple Guest OSes Work with RME</h1>
+
+<p>The answer requires understanding one architectural decision ARM made that is genuinely elegant: KVM and RMM are two different hypervisors, running in two different security worlds, with a deliberate and principled split of authority between them.</p>
+
+<!-- ══ MAIN ARCHITECTURE DIAGRAM ══ -->
+<svg viewBox="0 0 880 620" role="img" aria-label="ARM CCA four-world architecture with KVM and Realm VMs">
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  </marker>
+</defs>
+
+<!-- ROOT WORLD -->
+<rect x="10" y="10" width="860" height="72" rx="10" fill="#f4e8d4" stroke="#8a4a00" stroke-width="1.5"/>
+<text x="24" y="34" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="#8a4a00">ROOT WORLD (EL3)</text>
+<text x="24" y="54" font-family="IBM Plex Sans" font-size="11" fill="#7a6a55">TF-A Monitor: GPT management · world switching · RMI dispatch</text>
+<rect x="480" y="22" width="378" height="48" rx="6" fill="#f9f2e8" stroke="#d6b87a" stroke-width="1"/>
+<text x="669" y="42" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="#8a4a00">GPT (Granule Protection Table)</text>
+<text x="669" y="58" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">one bit per 4KB page: NS | Realm | Secure | Root</text>
+
+<!-- NORMAL WORLD -->
+<rect x="10" y="100" width="430" height="470" rx="10" fill="#e8f0f8" stroke="#1a5c8a" stroke-width="1.5"/>
+<text x="24" y="122" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="#1a5c8a">NORMAL WORLD</text>
+
+<!-- KVM -->
+<rect x="22" y="134" width="406" height="74" rx="8" fill="#c8def0" stroke="#1a5c8a" stroke-width="1"/>
+<text x="225" y="158" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#1a5c8a">KVM / Linux (Normal EL2)</text>
+<text x="225" y="176" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#3a5a7a">Resource policy: allocates memory, CPU, devices</text>
+<text x="225" y="192" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#3a5a7a">Creates + schedules both regular VMs and Realm VMs</text>
+
+<!-- Regular VMs -->
+<rect x="22" y="222" width="186" height="114" rx="8" fill="#d4e8f8" stroke="#4a8abf" stroke-width="1"/>
+<text x="115" y="244" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#1a5c8a">QEMU Guest A</text>
+<text x="115" y="260" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#3a5a7a">Normal EL1 (guest kernel)</text>
+<text x="115" y="276" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#3a5a7a">Normal EL0 (apps)</text>
+<text x="115" y="296" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#c0440e">KVM manages directly</text>
+<text x="115" y="312" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#c0440e">no isolation from KVM</text>
+<rect x="222" y="222" width="206" height="114" rx="8" fill="#d4e8f8" stroke="#4a8abf" stroke-width="1"/>
+<text x="325" y="244" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#1a5c8a">QEMU Guest B</text>
+<text x="325" y="260" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#3a5a7a">Normal EL1 (guest kernel)</text>
+<text x="325" y="276" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#3a5a7a">Normal EL0 (apps)</text>
+<text x="325" y="296" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#c0440e">standard VM isolation</text>
+<text x="325" y="312" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#c0440e">KVM = hypervisor</text>
+
+<!-- virtio shared buffer note -->
+<rect x="22" y="352" width="406" height="58" rx="6" fill="#f8f0e4" stroke="#d6b87a" stroke-width="1"/>
+<text x="225" y="374" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="#8a4a00">virtio I/O shared buffer (GPI_NONSECURE)</text>
+<text x="225" y="390" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">Realm VM explicitly shares pages via RSI for device I/O</text>
+<text x="225" y="406" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7a6a55">KVM cannot pull pages out — Realm controls the sharing</text>
+
+<!-- Normal world memory -->
+<rect x="22" y="424" width="406" height="132" rx="8" fill="#d4e8f8" stroke="#4a8abf" stroke-width="1"/>
+<text x="225" y="448" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#1a5c8a">Normal world physical memory (NS PAS)</text>
+<text x="225" y="466" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#3a5a7a">GPT: GPI_NS — accessible from Normal world</text>
+<text x="225" y="484" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#3a5a7a">KVM manages page allocation to Regular VMs</text>
+<text x="225" y="502" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#3a5a7a">KVM delegates pages to Realm world via RMI_GRANULE_DELEGATE</text>
+<text x="225" y="524" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#c0440e">Once delegated → GPT updated → KVM cannot access</text>
+<text x="225" y="542" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#c0440e">GPC fault on any Normal world access attempt</text>
+
+<!-- REALM WORLD -->
+<rect x="450" y="100" width="420" height="470" rx="10" fill="#e4f4ec" stroke="#1a7a4a" stroke-width="1.5"/>
+<text x="464" y="122" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="#1a7a4a">REALM WORLD</text>
+
+<!-- RMM -->
+<rect x="462" y="134" width="396" height="74" rx="8" fill="#b8e0c8" stroke="#1a7a4a" stroke-width="1"/>
+<text x="660" y="158" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#1a7a4a">RMM — Realm Management Monitor (R-EL2)</text>
+<text x="660" y="176" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2a6a3a">Protection mechanism: manages RTTs (Realm Translation Tables)</text>
+<text x="660" y="192" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2a6a3a">Measured + attested. RMI handler. RSI provider. TCB.</text>
+
+<!-- Realm VMs -->
+<rect x="462" y="222" width="180" height="130" rx="8" fill="#c8ecd8" stroke="#2a8a5a" stroke-width="1"/>
+<text x="552" y="244" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#1a7a4a">Realm VM 1</text>
+<text x="552" y="260" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2a6a3a">R-EL1: guest kernel</text>
+<text x="552" y="276" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2a6a3a">R-EL0: guest apps</text>
+<text x="552" y="296" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#1a7a4a">RMM manages stage-2</text>
+<text x="552" y="312" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#1a7a4a">KVM cannot read state</text>
+<text x="552" y="328" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#1a7a4a">RIM+REM: attested</text>
+<rect x="660" y="222" width="186" height="130" rx="8" fill="#c8ecd8" stroke="#2a8a5a" stroke-width="1"/>
+<text x="753" y="244" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#1a7a4a">Realm VM 2</text>
+<text x="753" y="260" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2a6a3a">R-EL1: guest kernel</text>
+<text x="753" y="276" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2a6a3a">R-EL0: guest apps</text>
+<text x="753" y="296" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#1a7a4a">Isolated from</text>
+<text x="753" y="312" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#1a7a4a">Realm VM 1</text>
+<text x="753" y="328" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#1a7a4a">and from KVM</text>
+
+<!-- Realm memory -->
+<rect x="462" y="370" width="396" height="186" rx="8" fill="#c8ecd8" stroke="#2a8a5a" stroke-width="1"/>
+<text x="660" y="394" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#1a7a4a">Realm world physical memory (Realm PAS)</text>
+<text x="660" y="412" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2a6a3a">GPT: GPI_REALM — accessible only from Realm world</text>
+<text x="660" y="430" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2a6a3a">Pages delegated here via RMI_GRANULE_DELEGATE</text>
+<text x="660" y="450" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2a6a3a">RMM manages RTTs: IPA → PA mapping per Realm VM</text>
+<text x="660" y="470" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#1a7a4a">Any Normal world access → GPC fault (hardware enforced)</text>
+<text x="660" y="490" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#1a7a4a">Any Secure world access → GPC fault</text>
+<text x="660" y="516" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="#c0440e">GPC check fires on every MMU + SMMU translation</text>
+<text x="660" y="534" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#c0440e">All initiators blocked equally (CPU and DMA)</text>
+
+<!-- INTERFACE ARROWS -->
+<!-- KVM → Root (RMI) -->
+<line x1="225" y1="100" x2="340" y2="82" stroke="#8a4a00" stroke-width="1.2" marker-end="url(#ar)" color="#8a4a00"/>
+<text x="240" y="92" font-family="IBM Plex Mono" font-size="9" fill="#8a4a00">RMI via SMC</text>
+
+<!-- Root → RMM (via EL3 dispatch) -->
+<line x1="490" y1="82" x2="560" y2="100" stroke="#8a4a00" stroke-width="1.2" marker-end="url(#ar)" color="#8a4a00"/>
+<text x="505" y="92" font-family="IBM Plex Mono" font-size="9" fill="#8a4a00">EL3 dispatches</text>
+
+<!-- Realm VM → RMM (RSI) -->
+<line x1="552" y1="352" x2="590" y2="208" stroke="#1a7a4a" stroke-width="1.2" marker-end="url(#ar)" color="#1a7a4a"/>
+<text x="555" y="290" font-family="IBM Plex Mono" font-size="9" fill="#1a7a4a">RSI</text>
+
+<!-- KVM schedules Realm VCPUs -->
+<line x1="430" y1="180" x2="462" y2="180" stroke="#1a5c8a" stroke-width="1.2" stroke-dasharray="4 2" marker-end="url(#ar)" color="#1a5c8a"/>
+<text x="430" y="172" font-family="IBM Plex Mono" font-size="8" fill="#1a5c8a">schedules</text>
+<text x="430" y="182" font-family="IBM Plex Mono" font-size="8" fill="#1a5c8a">VCPUs</text>
+
+<!-- virtio shared buffer arrows -->
+<line x1="428" y1="375" x2="462" y2="410" stroke="#8a4a00" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#ar)" color="#8a4a00"/>
+<line x1="462" y1="410" x2="428" y2="393" stroke="#8a4a00" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#ar)" color="#8a4a00"/>
+
+<!-- GPT controls both memory areas -->
+<line x1="660" y1="70" x2="280" y2="556" stroke="#8a4a00" stroke-width="0.8" stroke-dasharray="5 3" opacity="0.5"/>
+<line x1="690" y1="70" x2="660" y2="370" stroke="#8a4a00" stroke-width="0.8" stroke-dasharray="5 3" opacity="0.5"/>
+
+<!-- Secure world note -->
+<rect x="10" y="580" width="210" height="30" rx="5" fill="#f0e8f4" stroke="#6a1a6a" stroke-width="0.8"/>
+<text x="115" y="600" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a1a6a">Secure world (TrustZone): unchanged</text>
+
+</svg>
+
+<h2>The "Aha" Moments</h2>
+
+<h3>1. Two Hypervisors, Two Jobs — A Principled Split of Authority</h3>
+
+<p>ARM's architecture specification explicitly documents the design principle (verified from official ARM documentation):</p>
+
+<div class="callout root">
+  <span class="callout-label">ARM CCA Design Principle — Verified from ARM Den0125</span>
+  <strong>Policy</strong>: decisions about which resources to allocate to a Realm — CPU cycles, memory, devices. This is the responsibility of <strong>KVM in Normal EL2</strong>.<br><br>
+  <strong>Mechanism</strong>: enacting policy decisions that change architectural state, when those changes cannot be trusted to the hypervisor. This is the responsibility of <strong>RMM in Realm EL2</strong>.
+</div>
+
+<p>KVM remains the resource scheduler — it decides which physical pages a Realm gets, which pCPUs run which vCPUs, which devices are assigned. KVM retains full <strong>control plane authority</strong>. What KVM loses is <strong>data plane authority</strong> — once pages are delegated to the Realm, KVM cannot observe or modify what is in them.</p>
+
+<p>Stated simply: KVM is the landlord who allocates rooms. RMM is the locksmith who changes the locks once a tenant moves in. The landlord cannot enter after the lock is changed — not by policy, but because the hardware key no longer works for them.</p>
+
+<h3>2. Memory Delegation Is One-Way — The Same Lock Pattern, Applied Per-Page</h3>
+
+<p>When KVM decides to give physical pages to a Realm VM, it calls <code>RMI_GRANULE_DELEGATE</code> via SMC. The CPU traps to EL3 (Root Monitor). The Root Monitor updates the GPT for those pages: <code>GPI_NS → GPI_REALM</code>. The Root Monitor then switches to RMM at Realm EL2 to complete the operation.</p>
+
+<pre>KVM (Normal EL2)
+  │  SMC: RMI_GRANULE_DELEGATE(page_PA)
+  ▼
+Root Monitor (EL3)
+  │  Updates GPT: page_PA → GPI_REALM
+  │  Switches to Realm EL2
+  ▼
+RMM (Realm EL2)
+  │  Receives delegation, assigns to Realm VM
+  │  Updates RTTs (Realm Translation Tables)
+  ▼
+  Page is now Realm PAS
+  Any Normal world access → GPC fault (hardware, immediate)
+  KVM cannot read, write, or remap this page</pre>
+
+<div class="callout warn">
+  <span class="callout-label">The Lock Pattern — Recognised from the framework</span>
+  This is the same architectural pattern as SSC (Cortex-M55 SoC), HDP (STM32), and SMMU_s_CONF lock — a trusted entity at the highest privilege level updates a protection table, after which the untrusted entity (here: KVM) cannot access the protected resource. The difference: SSC/HDP lock is boot-time and per-region. GPT delegation is runtime and per-page. The principle is identical.
+</div>
+
+<p>One important nuance verified from the Linux kernel patch series: <strong>KVM can destroy a Realm VM at any time</strong>, which forces undelgation of all its pages back to NS PAS. KVM retains lifecycle authority (create and destroy) — it loses memory-access authority during the lifetime of a running Realm.</p>
+
+<h3>3. The Realm VM Controls Its Own I/O Boundary</h3>
+
+<p>Because KVM cannot access Realm memory, standard virtio I/O (which relies on the hypervisor reading and writing guest buffers) cannot work directly. The solution inverts the traditional authority model in an elegant way:</p>
+
+<p>The Realm VM itself decides which pages to make available for I/O. Using the RSI (Realm Services Interface) — a call from Realm EL1/EL0 up to RMM at Realm EL2 — the guest can transition specific pages from Realm PAS to NS PAS (GPI_NS), making them accessible to the hypervisor for device I/O.</p>
+
+<pre>Realm VM (R-EL1)
+  │  RSI_IPA_STATE_SET(buffer_page, NS)
+  ▼
+RMM (R-EL2)
+  │  SMC to Root Monitor
+  ▼
+Root Monitor (EL3)
+  │  Updates GPT: buffer_page → GPI_NONSECURE
+  ▼
+  KVM can now DMA device ↔ buffer_page
+  Realm VM retains control — it chose which page to share
+  KVM cannot pull pages out; Realm pushes them out</pre>
+
+<div class="callout realm">
+  <span class="callout-label">Authority inversion</span>
+  In traditional virtualisation, the hypervisor decides what memory the guest can access. In CCA, the Realm VM decides what memory the hypervisor can access. The guest controls its own I/O boundary, not the hypervisor.
+</div>
+
+<h3>4. GPC: The Same Target-Side Pattern at 4KB Granularity</h3>
+
+<p>The Granule Protection Check (GPC) fires at the <strong>output of every MMU and SMMU translation</strong> — both stage 1 and stage 2, for both CPU and DMA. When any translation produces a physical address, the GPC looks up that PA in the GPT. If the accessing security world does not match the GPT entry, a Granule Protection Fault occurs.</p>
+
+<p>This maps directly into the framework:</p>
+
+<table>
+  <thead><tr><th>Mechanism</th><th>Identity</th><th>Resource</th><th>Side</th><th>Granularity</th></tr></thead>
+  <tbody>
+    <tr><td>TZASC / TZC-400</td><td>HNONSEC (binary S/NS)</td><td>DRAM range</td><td>Target</td><td>Configurable ranges</td></tr>
+    <tr><td>MPC (STM32)</td><td>HNONSEC (binary S/NS)</td><td>SRAM block</td><td>Target</td><td>256–512 B per block</td></tr>
+    <tr><td><strong>GPT/GPC (ARM CCA)</strong></td><td><strong>Security world (NS/Realm/Secure/Root)</strong></td><td><strong>Physical granule</strong></td><td><strong>Target</strong></td><td><strong>4 KB per granule</strong></td></tr>
+    <tr><td>AMD SEV-SNP RMP</td><td>ASID (per-VM)</td><td>Physical page</td><td>Target</td><td>4 KB per page</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <span class="callout-label">The "Aha" — Confidential Computing = Fine-Grained MPC</span>
+  GPT/GPC is not a new security pattern. It is the same target-side access control pattern as TZASC and MPC — applied at 4KB per-page granularity with four-world identity instead of binary Secure/NonSecure. Confidential computing extended the granularity, not the principle.
+</div>
+
+<h3>5. What KVM Can and Cannot Do — The Precise Boundary</h3>
+
+<table>
+  <thead><tr><th>Operation</th><th>KVM can?</th><th>Mechanism that enforces</th></tr></thead>
+  <tbody>
+    <tr><td>Create a Realm VM</td><td>✅ Yes</td><td>KVM calls RMI_REALM_CREATE via SMC</td></tr>
+    <tr><td>Schedule Realm VM vCPU</td><td>✅ Yes</td><td>KVM calls RMI_REC_ENTER</td></tr>
+    <tr><td>Assign physical pages to Realm</td><td>✅ Yes (delegate)</td><td>RMI_GRANULE_DELEGATE → GPT update by Root Monitor</td></tr>
+    <tr><td>Provide virtio I/O devices</td><td>✅ Yes (via shared NS pages)</td><td>Realm VM must explicitly RSI-share pages first</td></tr>
+    <tr><td>Destroy Realm VM</td><td>✅ Yes (any time)</td><td>KVM calls RMI_REALM_DESTROY → forces undelegation</td></tr>
+    <tr><td>Read Realm VM memory</td><td>❌ No</td><td>GPT = GPI_REALM → GPC fault on any NS access</td></tr>
+    <tr><td>Modify Realm VM page tables</td><td>❌ No</td><td>RTTs managed exclusively by RMM at Realm EL2</td></tr>
+    <tr><td>Observe Realm VM register state</td><td>❌ No</td><td>CPU register state protected during world switch</td></tr>
+    <tr><td>Forge Realm attestation token</td><td>❌ No</td><td>Signed by Root Monitor with platform private key</td></tr>
+    <tr><td>Remap a Realm page to another VM</td><td>❌ No</td><td>GPT = GPI_REALM → NS access faults; only Root Monitor updates GPT</td></tr>
+  </tbody>
+</table>
+
+<h2>The Attestation Flow</h2>
+
+<p>The Realm VM's attestation is managed entirely within the trusted components — RMM and Root Monitor. KVM and the host OS are not in the attestation path at all.</p>
+
+<pre>Realm VM (R-EL1) requests attestation:
+  RSI_ATTESTATION_TOKEN_INIT (nonce from relying party)
+  RSI_ATTESTATION_TOKEN_CONTINUE
+        │
+        ▼
+RMM (R-EL2) collects measurements:
+  RIM  — Realm Initial Measurement (initial image digest)
+  REM  — Realm Extensible Measurement (runtime measurements)
+  RMM measurement itself (measured at boot by Root Monitor)
+        │
+        ▼
+Root Monitor (EL3) signs the token:
+  Platform private key (device certificate chain)
+  Produces: CCA token (CBOR, per IETF RATS RFC 9334)
+        │
+        ▼
+Token returned to Realm VM → forwarded to relying party
+
+TCB components visible in attestation:
+  • CPU hardware (RME extension)
+  • Root Monitor (TF-A, measured at boot)
+  • RMM (measured, in attestation token)
+  • Realm VM initial image (RIM)
+
+NOT in TCB:
+  • KVM  ← removed from trust path entirely
+  • Host Linux
+  • Other Realm VMs
+  • Other guest VMs in Normal world</pre>
+
+<h2>Comparison: ARM CCA vs AMD SEV-SNP vs Intel SGX</h2>
+
+<table>
+  <thead><tr><th>Property</th><th>ARM CCA (Realm)</th><th>AMD SEV-SNP</th><th>Intel SGX</th></tr></thead>
+  <tbody>
+    <tr><td>Isolation granularity</td><td>VM-level (Realm VM)</td><td>VM-level</td><td>Process-level (enclave)</td></tr>
+    <tr><td>Memory protection mechanism</td><td>GPT/GPC at 4KB</td><td>RMP at 4KB</td><td>EPCM at 4KB</td></tr>
+    <tr><td>Mechanism side</td><td>Target (GPC at translation output)</td><td>Target (RMP at walk end)</td><td>Target (EPCM on EPC access)</td></tr>
+    <tr><td>Hypervisor in TCB?</td><td>No (KVM excluded)</td><td>No (hypervisor excluded)</td><td>N/A (process-level)</td></tr>
+    <tr><td>Trusted component</td><td>RMM (Realm EL2) + Root Monitor</td><td>AMD Secure Processor</td><td>CPU enclave mode</td></tr>
+    <tr><td>Memory encryption</td><td>Implementation-defined (not mandated)</td><td>Mandatory (per-VM AES key)</td><td>Mandatory (MEE)</td></tr>
+    <tr><td>Intra-VM privilege levels</td><td>R-EL0/EL1/EL2</td><td>VMPL 0–3</td><td>N/A</td></tr>
+    <tr><td>Device DMA to private memory</td><td>Via SMMU GPC + TDISP (in development)</td><td>Via AMD IOMMU + RMP</td><td>Not supported (EPC is CPU-internal)</td></tr>
+    <tr><td>Entry point enforcement</td><td>World switch (hardware)</td><td>VMGEXIT (hardware)</td><td>ECALL via EENTER (SG-equivalent)</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <span class="callout-label">The SGX ↔ NSC/SG parallel — from your 2022 article</span>
+  Your observation about SGX's ECALL gateway being structurally equivalent to ARM Cortex-M33's NSC/SG mechanism is precise. Both define hardware-enforced controlled entry points into a protected domain. Both cause a fault on arbitrary branches. The difference: SGX enforces at the CPU instruction level (EENTER must target a valid TCS); ARM NSC enforces at the branch target (must land on SG instruction). Same pattern, different implementation depth.
+</div>
+
+<h2>A Note on Memory Encryption</h2>
+
+<p>ARM CCA's hardware architecture specification states that isolation is enforced "by faulting exceptions and by physical memory encryption." However — this is an important nuance — <strong>memory encryption is implementation-defined, not architecturally mandated</strong> by the CCA specification. A compliant CCA implementation can exist without inline DRAM encryption, relying solely on GPT/GPC for isolation.</p>
+
+<p>This contrasts with AMD SEV-SNP, where per-VM AES-128 encryption is a core architectural feature, not optional. For deployments where physical DRAM probing is in the threat model, the presence or absence of inline memory encryption is an important platform selection criterion, not something guaranteed by the CCA logo.</p>
+
+<h2>References</h2>
+<ol style="font-size:13px;color:var(--dim);max-width:720px;padding-left:20px;line-height:2">
+  <li>ARM Den0125 — "Arm CCA Software Architecture" (April 2025) — verified from developer.arm.com</li>
+  <li>ARM Den0125 — "Arm CCA Hardware Architecture" — GPT, GPC, Realm EL2 structure</li>
+  <li>ARM developer.arm.com — "Arm Confidential Compute Architecture" overview</li>
+  <li>Linux kernel Documentation/arch/arm64/arm-cca.html — KVM + RMM integration</li>
+  <li>Linux kernel mailing list — "[PATCH v3 00/43] arm64: Support for Arm CCA in KVM" (June 2024)</li>
+  <li>ACAI: "Protecting Accelerator Execution with Arm CCA" (arXiv:2305.15986) — RMM + GPT verified</li>
+  <li>virtCCA paper (arXiv:2306.11011) — RMI call sequence, SMC dispatch through EL3 verified</li>
+  <li>"Sharing is caring" paper (arXiv:2603.03403) — GPT world tagging, RTT management</li>
+  <li>Intel TDX Demystified (arXiv:2303.15540) — CCA vs TDX comparison</li>
+</ol>
+
+</body>
+</html>
