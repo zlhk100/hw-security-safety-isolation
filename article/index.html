@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Security and Safety by Isolation — A Unified Hardware Framework</title>
 <meta name="description" content="A first-principles framework unifying TrustZone, SMMU, MPU, MPAM, Qualcomm VMIDMT/XPU, NXP RDC, and every hardware isolation mechanism under one pattern.">
+<meta name="author" content="Lei Zhou">
+<link rel="icon" href="https://zlhk100.github.io/assets/mark.svg" type="image/svg+xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Security and Safety by Isolation — Lei Zhou">
+<meta property="og:description" content="A first-principles framework that makes TrustZone, IO-SMMU, MPAM and vendor protection mechanisms recognisable as one pattern.">
+<meta property="og:url" content="https://zlhk100.github.io/hw-security-safety-isolation/article/">
+<meta property="og:image" content="https://zlhk100.github.io/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet">
 <style>
@@ -529,6 +537,17 @@ code { font-family: var(--mono); font-size: 12px; color: var(--accent); backgrou
 h2:hover .copy-link,
 h3:hover .copy-link { opacity: 1; }
 
+
+/* ── AUTHOR (shared with zlhk100.github.io) ── */
+.lz-byline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#6f604c;margin:6px 0 26px}
+.lz-byline a{display:inline-flex;align-items:center;gap:8px;color:#2E3192;font-weight:600;text-decoration:none}
+.lz-byline a:hover{text-decoration:underline}
+.lz-byline img{width:22px;height:22px;display:block}
+.lz-footer{border-top:1px solid #d6cab8;margin-top:28px;padding-top:20px;display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;font-size:13px}
+.lz-footer a{color:#2E3192;text-decoration:none;font-weight:600}
+.lz-footer a:hover{text-decoration:underline}
+.lz-footer img{width:24px;height:24px;display:block}
+
 /* ── FOOTER ── */
 footer {
   border-top: 1px solid var(--border);
@@ -584,6 +603,7 @@ footer a:hover { text-decoration: underline; }
   <div class="nav-logo">
     <span>Knowledge Library</span>
     <h2>Hardware Security &amp; Safety Isolation</h2>
+    <a href="https://zlhk100.github.io/" style="display:block;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#2E3192;text-decoration:none;padding:0;border:0">by Lei Zhou</a>
   </div>
 
   <div class="nav-section">Foundation</div>
@@ -625,6 +645,7 @@ footer a:hover { text-decoration: underline; }
   <div class="hero-kicker">Hardware Security · Functional Safety · Unified Framework</div>
   <h1>Security and Safety by Isolation</h1>
   <p class="hero-sub">A first-principles framework that makes TrustZone SAU, IO-SMMU, Qualcomm VMIDMT/XPU, NXP RDC, ARM MPAM, and every other hardware protection mechanism immediately recognisable as the same idea.</p>
+  <div class="lz-byline"><a href="https://zlhk100.github.io/"><img src="https://zlhk100.github.io/assets/mark.svg" alt="">Lei Zhou</a><span>Principal Systems Architect &amp; Technical Leader</span></div>
   <div class="hero-tags">
     <span class="hero-tag">TrustZone</span>
     <span class="hero-tag">SAU / IDAU</span>
@@ -1250,8 +1271,8 @@ EL0  Secure/NS     Applications, Trusted Apps</pre>
   <div class="footer-grid">
     <div>
       <div class="footer-title">About this project</div>
-      <p>An open, evolving knowledge library on hardware security and safety isolation mechanisms. Contributions welcome — see <a href="../../CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
-      <p style="margin-top:12px">Licensed under <a href="../../LICENSE">CC BY 4.0</a>. Attribution required.</p>
+      <p>An open, evolving knowledge library on hardware security and safety isolation mechanisms. Contributions welcome — see <a href="https://github.com/zlhk100/hw-security-safety-isolation/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+      <p style="margin-top:12px">Licensed under <a href="https://github.com/zlhk100/hw-security-safety-isolation/blob/main/LICENSE">CC BY 4.0</a>. Attribution required.</p>
     </div>
     <div>
       <div class="footer-title">Contribute</div>
@@ -1259,6 +1280,7 @@ EL0  Secure/NS     Applications, Trusted Apps</pre>
     </div>
   </div>
   <p style="color:var(--text-dim);font-size:12px">This analysis draws on work across PSA Certified Level 2 certification for Cortex-M55, IO-SMMU-based mixed-criticality platforms, and comparative architecture review of STM32U585, NXP i.MX8x, Xilinx UltraScale+ MPSOC, and Qualcomm Snapdragon. Qualcomm architecture section based on Qualcomm Technologies, Inc. public white paper "An Introduction to Access Control on Qualcomm Snapdragon Platforms" (2020).</p>
+  <div class="lz-footer"><a href="https://zlhk100.github.io/"><img src="https://zlhk100.github.io/assets/mark.svg" alt=""></a><span>Written by <a href="https://zlhk100.github.io/">Lei Zhou</a></span><a href="https://www.linkedin.com/in/leizhou">LinkedIn</a><a href="https://github.com/zlhk100">GitHub</a><a href="https://medium.com/@zlhk100">Medium</a></div>
 </footer>
 
 </main>

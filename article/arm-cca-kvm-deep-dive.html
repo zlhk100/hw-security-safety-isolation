@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ARM CCA + KVM: How Realm VMs Work with RME</title>
+<meta name="author" content="Lei Zhou">
+<link rel="icon" href="https://zlhk100.github.io/assets/mark.svg" type="image/svg+xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Arm CCA + KVM: how Realm VMs work with RME — Lei Zhou">
+<meta property="og:description" content="How KVM and the Realm Management Monitor split authority across two security worlds under Arm CCA.">
+<meta property="og:url" content="https://zlhk100.github.io/hw-security-safety-isolation/article/arm-cca-kvm-deep-dive.html">
+<meta property="og:image" content="https://zlhk100.github.io/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600&family=Fraunces:wght@300;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -44,12 +52,23 @@ td { padding: 9px 12px; border-bottom: 1px solid rgba(214,202,184,.4); vertical-
 .world-ro{ color: var(--root);  font-weight: 600; font-family: var(--mono); font-size: 12px; }
 .world-s { color: var(--secure);font-weight: 600; font-family: var(--mono); font-size: 12px; }
 svg { width: 100%; margin: 24px 0; }
+
+/* ── AUTHOR (shared with zlhk100.github.io) ── */
+.lz-byline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#6f604c;margin:6px 0 26px}
+.lz-byline a{display:inline-flex;align-items:center;gap:8px;color:#2E3192;font-weight:600;text-decoration:none}
+.lz-byline a:hover{text-decoration:underline}
+.lz-byline img{width:22px;height:22px;display:block}
+.lz-footer{border-top:1px solid #d6cab8;margin-top:28px;padding-top:20px;display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;font-size:13px}
+.lz-footer a{color:#2E3192;text-decoration:none;font-weight:600}
+.lz-footer a:hover{text-decoration:underline}
+.lz-footer img{width:24px;height:24px;display:block}
 </style>
 </head>
 <body>
 
 <div class="kicker">ARM CCA · RME · KVM · Confidential Computing</div>
 <h1>ARM CCA + KVM:<br>How Multiple Guest OSes Work with RME</h1>
+<div class="lz-byline"><a href="https://zlhk100.github.io/"><img src="https://zlhk100.github.io/assets/mark.svg" alt="">Lei Zhou</a><span>Principal Systems Architect &amp; Technical Leader</span></div>
 
 <p>The answer requires understanding one architectural decision ARM made that is genuinely elegant: KVM and RMM are two different hypervisors, running in two different security worlds, with a deliberate and principled split of authority between them.</p>
 
@@ -356,6 +375,9 @@ NOT in TCB:
   <li>"Sharing is caring" paper (arXiv:2603.03403) — GPT world tagging, RTT management</li>
   <li>Intel TDX Demystified (arXiv:2303.15540) — CCA vs TDX comparison</li>
 </ol>
+
+<div class="lz-footer"><a href="https://zlhk100.github.io/"><img src="https://zlhk100.github.io/assets/mark.svg" alt=""></a><span>Part of the <a href="https://zlhk100.github.io/hw-security-safety-isolation/article/">Security and Safety by Isolation</a> library · Written by <a href="https://zlhk100.github.io/">Lei Zhou</a></span><a href="https://www.linkedin.com/in/leizhou">LinkedIn</a><a href="https://github.com/zlhk100">GitHub</a><a href="https://medium.com/@zlhk100">Medium</a></div>
+<p style="font-size:12px;color:var(--dim);margin-top:10px">Licensed under <a href="https://github.com/zlhk100/hw-security-safety-isolation/blob/main/LICENSE" style="color:inherit">CC BY 4.0</a>.</p>
 
 </body>
 </html>

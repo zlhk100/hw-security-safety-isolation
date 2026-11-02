@@ -18,7 +18,7 @@ The structural insight at the centre: two engineering communities — ISO 26262 
 
 ## Slides
 
-[sovereign-ai-hardware-problem.pdf](./sovereign-ai-hardware-problem.pdf)
+[Sovereign_AI_Hardware_Problem_v7.pdf](./Sovereign_AI_Hardware_Problem_v7.pdf)
 
 ---
 
