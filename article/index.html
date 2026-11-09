@@ -1149,10 +1149,10 @@ EL0  Secure/NS     Applications, Trusted Apps</pre>
   </div>
 
   <h3>Cache Partitioning</h3>
-  <p>MPAM-aware caches assign each PARTID a subset of cache ways. A process with PARTID 2 can only occupy the cache ways assigned to partition 2 — it cannot evict cache lines belonging to PARTID 1 (the safety partition). Cache behaviour becomes deterministic per-partition, enabling WCET analysis closure.</p>
+  <p>MPAM-aware caches assign each PARTID a subset of cache ways. A process with PARTID 2 can only occupy the cache ways assigned to partition 2 — it cannot evict cache lines belonging to PARTID 1 (the safety partition). Cache-capacity interference between partitions is limited, which removes one input to a WCET argument. Bandwidth, interconnect and other shared resources still need separate analysis.</p>
 
   <h3>DRAM Bandwidth Control</h3>
-  <p>Each PARTID can be assigned a maximum DRAM bandwidth share. An NPU running matrix multiply at full bandwidth cannot starve the safety controller's memory accesses. The "noisy neighbour" problem is replaced by bounded, deterministic resource allocation.</p>
+  <p>Each PARTID can be assigned a maximum DRAM bandwidth share. An NPU running matrix multiply at full bandwidth is held to its configured share, which limits how far it can starve the safety controller's memory accesses. The "noisy neighbour" problem becomes a configured limit that still has to be verified on the target SoC.</p>
 
   <div class="callout warn">
     <span class="callout-label">Incomplete safety architectures</span>
