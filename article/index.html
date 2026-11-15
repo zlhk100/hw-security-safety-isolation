@@ -1158,6 +1158,8 @@ EL0  Secure/NS     Applications, Trusted Apps</pre>
     <span class="callout-label">Incomplete safety architectures</span>
     Most mixed-criticality architectures have partial spatial isolation (SMMU) and no temporal isolation (MPAM). This means the safety argument cannot be closed — WCET analysis of safety functions remains open, and the FFI claim is incomplete under IEC 61508 or ISO 26262.
   </div>
+
+  <p>MPAM bounds one hop on a sensor-to-actuator path. <a href="https://zlhk100.github.io/library/chain-of-time.html">From chain of trust to chain of time</a> follows the rest of the path, from the device backend and hypervisor to middleware and accelerators, and asks where each hop's timing is enforced, only detected, or not bounded at all.</p>
 </section>
 
 <!-- ══ PART 16: LOCK ══ -->
@@ -1272,6 +1274,7 @@ EL0  Secure/NS     Applications, Trusted Apps</pre>
     <div>
       <div class="footer-title">About this project</div>
       <p>An open, evolving knowledge library on hardware security and safety isolation mechanisms. Contributions welcome — see <a href="https://github.com/zlhk100/hw-security-safety-isolation/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+      <p style="margin-top:12px">Related: <a href="https://zlhk100.github.io/library/spdm-ide-trust-chain.html">The SPDM/IDE trust chain</a> (who is it, and what is it running) and <a href="https://zlhk100.github.io/library/chain-of-time.html">From chain of trust to chain of time</a> (how long, and how much).</p>
       <p style="margin-top:12px">Licensed under <a href="https://github.com/zlhk100/hw-security-safety-isolation/blob/main/LICENSE">CC BY 4.0</a>. Attribution required.</p>
     </div>
     <div>
